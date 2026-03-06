@@ -139,6 +139,25 @@
   .progress-fill { height:100%; background:linear-gradient(90deg,var(--accent-blue),var(--accent-green)); border-radius:3px; transition:width 0.8s ease; }
 
   /* TABLET */
+  /* BENEFIT CARDS */
+  .ben-card { display:flex; align-items:center; justify-content:space-between; padding:16px; border:1px solid var(--border); border-radius:4px; margin-bottom:12px; transition:border-color 0.3s; position:relative; overflow:hidden; gap:16px; }
+  .ben-card::before { content:''; position:absolute; top:0; left:0; bottom:0; width:3px; background:var(--border); transition:background 0.3s; }
+  .ben-card.available { border-color:rgba(0,229,160,0.3); background:rgba(0,229,160,0.03); }
+  .ben-card.available::before { background:var(--accent-green); }
+  .ben-card.locked { border-color:var(--border); opacity:0.6; }
+  .ben-card.locked::before { background:var(--text-muted); }
+  .ben-card-info { flex:1; }
+  .ben-card-name { font-weight:700; font-size:1rem; margin-bottom:3px; }
+  .ben-card-desc { font-size:0.78rem; color:var(--text-secondary); }
+  .ben-card-right { text-align:right; flex-shrink:0; }
+  .ben-card-pts { font-family:'Orbitron',monospace; font-size:1rem; font-weight:700; white-space:nowrap; }
+  .ben-card.available .ben-card-pts { color:var(--accent-green); }
+  .ben-card.locked .ben-card-pts { color:var(--text-muted); }
+  .ben-card-status { font-size:0.58rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; margin-top:4px; }
+  .ben-card.available .ben-card-status { color:var(--accent-green); }
+  .ben-card.locked .ben-card-status { color:var(--text-muted); }
+  .ben-missing-pts { font-size:0.7rem; color:var(--text-muted); margin-top:3px; }
+
   @media(max-width:1024px){
     :root { --sidebar-w: 220px; }
     .main-content { padding:24px 20px; }
@@ -351,6 +370,10 @@
         <span class="nav-icon">🎁</span>
         <span class="nav-label">Beneficios canjeados</span>
       </div>
+      <div class="nav-item" data-panel="disponibles">
+        <span class="nav-icon">🏆</span>
+        <span class="nav-label">Beneficios disponibles</span>
+      </div>
     </aside>
 
     <!-- MAIN PANELS -->
@@ -419,6 +442,19 @@
         </div>
       </div>
 
+      <!-- BENEFICIOS DISPONIBLES -->
+      <div class="content-panel" id="panel-disponibles">
+        <div class="panel">
+          <div class="panel-header">
+            <span>🏆</span>
+            <div class="panel-title">Beneficios disponibles</div>
+          </div>
+          <div class="panel-body">
+            <div id="disponiblesList"></div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- end main-content -->
   </div><!-- end app-body -->
 </div><!-- end appLayout -->
@@ -451,6 +487,7 @@
       document.querySelectorAll(".content-panel").forEach(p => p.classList.remove("active"));
       item.classList.add("active");
       document.getElementById("panel-" + item.dataset.panel).classList.add("active");
+      if (item.dataset.panel === "disponibles") renderDisponibles();
     });
   });
 
@@ -657,6 +694,48 @@
     document.getElementById(type === "ok" ? "alertOkMsg" : "alertErrMsg").textContent = msg;
     el.classList.add("show");
     setTimeout(() => el.classList.remove("show"), 4000);
+  }
+
+  // ── BENEFICIOS DISPONIBLES ───────────────────────────
+  async function renderDisponibles() {
+    const list = document.getElementById("disponiblesList");
+    if (!list) return;
+    list.innerHTML = "<div class='empty-msg'>Cargando...</div>";
+
+    const snap = await getDocs(collection(db, "beneficios"));
+    const bens = [];
+    snap.forEach(d => bens.push({id:d.id, ...d.data()}));
+
+    if (!bens.length) {
+      list.innerHTML = "<div class='empty-msg'>No hay beneficios cargados aún</div>";
+      return;
+    }
+
+    // Sort: available first, then by points asc
+    const pts = state.puntos;
+    bens.sort((a,b) => {
+      const aAvail = pts >= a.puntos;
+      const bAvail = pts >= b.puntos;
+      if (aAvail && !bAvail) return -1;
+      if (!aAvail && bAvail) return 1;
+      return a.puntos - b.puntos;
+    });
+
+    list.innerHTML = bens.map(b => {
+      const available = pts >= b.puntos;
+      const missing = b.puntos - pts;
+      return "<div class='ben-card " + (available ? "available" : "locked") + "'>" +
+        "<div class='ben-card-info'>" +
+          "<div class='ben-card-name'>🎁 " + b.nombre + "</div>" +
+          (b.descripcion ? "<div class='ben-card-desc'>" + b.descripcion + "</div>" : "") +
+          (!available ? "<div class='ben-missing-pts'>Te faltan " + missing + " pts para este beneficio</div>" : "") +
+        "</div>" +
+        "<div class='ben-card-right'>" +
+          "<div class='ben-card-pts'>" + b.puntos + " pts</div>" +
+          "<div class='ben-card-status'>" + (available ? "✓ Disponible" : "🔒 Bloqueado") + "</div>" +
+        "</div>" +
+      "</div>";
+    }).join("");
   }
 
   // ── EVENT LISTENERS ───────────────────────────────────
