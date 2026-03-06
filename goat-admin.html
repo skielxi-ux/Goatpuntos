@@ -240,7 +240,7 @@
     <div class="panel">
       <div class="panel-header"><div class="panel-title">Codigos cargados</div><button class="btn btn-export" id="btnExportCodigos"><span>Exportar CSV</span></button></div>
       <div class="panel-body" style="padding-bottom:0;"><div class="search-row"><input class="search-input" id="searchCode" placeholder="Buscar codigo o nombre..."><span class="result-count" id="codeCount"></span></div></div>
-      <div class="table-wrap"><table><thead><tr><th>#</th><th>Codigo</th><th>Nombre</th><th>Puntos</th><th>Estado</th><th>Creado</th><th></th></tr></thead><tbody id="codesTableBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>Codigo</th><th>Nombre</th><th>Puntos</th><th>Estado</th><th>Creado</th><th>Vence</th><th></th></tr></thead><tbody id="codesTableBody"></tbody></table></div>
     </div>
   </div>
 
@@ -435,9 +435,34 @@
     const entries = Object.entries(codes).filter(([c,t]) => !q || c.toLowerCase().includes(q) || t.nombre.toLowerCase().includes(q));
     document.getElementById("codeCount").textContent = entries.length + " resultado(s)";
     if (!entries.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>No hay codigos cargados</td></tr>"; return; }
-    entries.forEach(([code,t],i) => {
+    // Auto-delete expired unused codes
+    const now = new Date();
+    for (const [code, t] of entries) {
+      if (!t.usado && t.venceISO && new Date(t.venceISO) < now) {
+        await deleteDoc(doc(db, "codigos", code));
+        console.log("Auto-deleted expired code:", code);
+      }
+    }
+    // Reload after deletions
+    const freshCodes = await getCodes();
+    const freshEntries = Object.entries(freshCodes).filter(([c,t]) => !q || c.toLowerCase().includes(q) || t.nombre.toLowerCase().includes(q));
+    tbody.innerHTML = "";
+    document.getElementById("codeCount").textContent = freshEntries.length + " resultado(s)";
+    if (!freshEntries.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='8'>No hay codigos cargados</td></tr>"; return; }
+
+    freshEntries.forEach(([code,t],i) => {
+      const venceDate = t.venceISO ? new Date(t.venceISO) : null;
+      const diasVence = venceDate ? Math.ceil((venceDate - now) / (1000*60*60*24)) : null;
+      let venceLabel = t.vence || "—";
+      let venceStyle = "color:var(--text-secondary);font-size:0.82rem;";
+      if (!t.usado && diasVence !== null) {
+        if (diasVence <= 5) venceStyle = "color:var(--accent-red);font-size:0.82rem;font-weight:700;";
+        else if (diasVence <= 10) venceStyle = "color:var(--accent-yellow);font-size:0.82rem;font-weight:600;";
+        else venceStyle = "color:var(--accent-green);font-size:0.82rem;";
+        venceLabel = venceLabel + (diasVence > 0 ? " (" + diasVence + "d)" : " ⚠️");
+      }
       const tr = document.createElement("tr");
-      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td class='td-code'>" + code + "</td><td>" + t.emoji + " " + t.nombre + "</td><td class='td-pts'>+" + t.puntos + "</td><td><span class='td-used " + (t.usado?"yes":"no") + "'>" + (t.usado?"Canjeado":"Disponible") + "</span></td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + (t.creado||"—") + "</td><td><button class='btn btn-danger' id='del_" + code + "'><span>Eliminar</span></button></td>";
+      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td class='td-code'>" + code + "</td><td>" + t.emoji + " " + t.nombre + "</td><td class='td-pts'>+" + t.puntos + "</td><td><span class='td-used " + (t.usado?"yes":"no") + "'>" + (t.usado?"Canjeado":"Disponible") + "</span></td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + (t.creado||"—") + "</td><td style='" + venceStyle + "'>" + venceLabel + "</td><td><button class='btn btn-danger' id='del_" + code + "'><span>Eliminar</span></button></td>";
       tbody.appendChild(tr);
       document.getElementById("del_"+code).onclick = () => confirmDelete(code, t.nombre);
     });
