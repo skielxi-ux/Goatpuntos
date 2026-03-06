@@ -943,11 +943,140 @@
     </div>
   </div>
 
+  <!-- BENEFICIOS -->
+  <div class="tab-content" id="tab-beneficios">
+
+    <!-- Agregar beneficio -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🎁 Agregar beneficio</div>
+      </div>
+      <div class="panel-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre del beneficio</label>
+            <input class="form-input" id="newBenNombre" placeholder="Ej: 1 hora gratis" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Puntos requeridos</label>
+            <input class="form-input" id="newBenPts" type="number" placeholder="Ej: 100" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción (opcional)</label>
+            <input class="form-input" id="newBenDesc" placeholder="Ej: Una hora en cualquier estación" autocomplete="off">
+          </div>
+          <button class="btn btn-add" id="btnAddBeneficio"><span>+ Agregar</span></button>
+        </div>
+        <div class="alert alert-success" id="benOk"><span>✓</span><span id="benOkMsg"></span></div>
+        <div class="alert alert-error" id="benErr"><span>✗</span><span id="benErrMsg"></span></div>
+      </div>
+    </div>
+
+    <!-- Lista de beneficios -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🏅 Beneficios disponibles</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Beneficio</th>
+              <th>Descripción</th>
+              <th>Puntos</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="benTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Aplicar beneficio a cliente -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⚡ Aplicar beneficio a cliente</div>
+      </div>
+      <div class="panel-body">
+        <div class="form-row" style="grid-template-columns: 1fr 1fr auto;">
+          <div class="form-group">
+            <label class="form-label">Buscar cliente por email</label>
+            <input class="form-input" id="searchClientEmail" placeholder="email@ejemplo.com" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">‎</label>
+            <button class="btn btn-add" id="btnBuscarCliente" style="width:100%;"><span>🔍 Buscar</span></button>
+          </div>
+        </div>
+
+        <!-- Cliente encontrado -->
+        <div id="clienteFound" style="display:none; margin-top:20px;">
+          <div style="background:var(--bg-input);border:1px solid var(--border-glow);border-radius:3px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-weight:700;font-size:1rem;" id="clienteNombre">—</div>
+              <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:2px;" id="clienteEmail2">—</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:Orbitron,monospace;font-size:1.6rem;font-weight:700;color:var(--accent-green);" id="clientePts">0</div>
+              <div style="font-size:0.6rem;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;">puntos disponibles</div>
+            </div>
+          </div>
+
+          <div class="form-row" style="grid-template-columns: 1fr auto;">
+            <div class="form-group">
+              <label class="form-label">Seleccionar beneficio a aplicar</label>
+              <select class="form-input" id="selectBeneficio" style="cursor:pointer;">
+                <option value="">— Elegí un beneficio —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">‎</label>
+              <button class="btn btn-add" id="btnAplicarBeneficio" style="width:100%;"><span>✅ Aplicar</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div id="clienteNotFound" style="display:none;margin-top:16px;">
+          <div class="alert alert-error show"><span>✗</span><span>No se encontró ningún cliente con ese email.</span></div>
+        </div>
+
+        <div class="alert alert-success" id="applyOk" style="margin-top:12px;"><span>✓</span><span id="applyOkMsg"></span></div>
+        <div class="alert alert-error" id="applyErr" style="margin-top:12px;"><span>✗</span><span id="applyErrMsg"></span></div>
+      </div>
+    </div>
+
+    <!-- Historial de beneficios aplicados -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📜 Historial de beneficios aplicados</div>
+        <button class="btn btn-export" id="btnExportBeneficios"><span>⬇ Exportar CSV</span></button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Email</th>
+              <th>Beneficio</th>
+              <th>Puntos descontados</th>
+              <th>Puntos restantes</th>
+            </tr>
+          </thead>
+          <tbody id="benHistTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, orderBy, addDoc, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAbM5y5t1PdESAqKYmXUAv79w_pfzkHqjg",
@@ -1023,7 +1152,7 @@
   // ── TABS ──────────────────────────────────────────────
   function switchTab(name) {
     document.querySelectorAll('.tab').forEach((t,i) => {
-      const names = ['dashboard','codigos','historial'];
+      const names = ['dashboard','codigos','historial','beneficios'];
       t.classList.toggle('active', names[i] === name);
     });
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -1031,6 +1160,7 @@
     if (name === 'dashboard') renderDashboard();
     if (name === 'codigos') renderCodesTable();
     if (name === 'historial') renderHistTable();
+    if (name === 'beneficios') { renderBenTable(); renderBenHistTable(); }
   }
 
   // ── EMOJI GRID ────────────────────────────────────────
@@ -1221,7 +1351,15 @@
       });
       filename = 'goat_historial.csv';
     }
-        const csv = rows.map(function(r){ return r.map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+        if (type === 'beneficios') {
+      const hist = await getBenHistorial();
+      rows = [['Fecha','Cliente','Email','Beneficio','Puntos descontados','Puntos restantes']];
+      hist.forEach(h => {
+        rows.push([h.fecha, h.nombre, h.email, h.beneficio, h.puntosDescontados, h.puntosRestantes]);
+      });
+      filename = 'goat_beneficios.csv';
+    }
+    const csv = rows.map(function(r){ return r.map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1231,15 +1369,17 @@
 
   // ── ALERTS ───────────────────────────────────────────
   function showMsg(prefix, type, msg) {
-    const ok  = document.getElementById(prefix + 'Ok');
-    const err = document.getElementById(prefix + 'Err');
+    const realPrefix = prefix === 'apply' ? 'apply' : prefix;
+    const ok  = document.getElementById(realPrefix + 'Ok');
+    const err = document.getElementById(realPrefix + 'Err');
+    if (!ok || !err) return;
     ok.classList.remove('show');
     err.classList.remove('show');
     if (type === 'ok') {
-      document.getElementById(prefix + 'OkMsg').textContent = msg;
+      document.getElementById(realPrefix + 'OkMsg').textContent = msg;
       ok.classList.add('show');
     } else {
-      document.getElementById(prefix + 'ErrMsg').textContent = msg;
+      document.getElementById(realPrefix + 'ErrMsg').textContent = msg;
       err.classList.add('show');
     }
     setTimeout(() => { ok.classList.remove('show'); err.classList.remove('show'); }, 4000);
@@ -1283,6 +1423,206 @@
     await renderDashboard();
   }
 
+  // ── BENEFICIOS ───────────────────────────────────────
+  async function getBeneficios() {
+    const snap = await getDocs(collection(db, 'beneficios'));
+    const result = {};
+    snap.forEach(d => { result[d.id] = d.data(); });
+    return result;
+  }
+
+  async function getBenHistorial() {
+    try {
+      const snap = await getDocs(query(collection(db, 'beneficios_historial'), orderBy('timestamp', 'desc')));
+      const result = [];
+      snap.forEach(d => result.push({ id: d.id, ...d.data() }));
+      return result;
+    } catch {
+      const snap = await getDocs(collection(db, 'beneficios_historial'));
+      const result = [];
+      snap.forEach(d => result.push({ id: d.id, ...d.data() }));
+      return result;
+    }
+  }
+
+  async function getClienteByEmail(email) {
+    // Get all historial and sum points per email
+    const snap = await getDocs(collection(db, 'historial'));
+    const historial = [];
+    snap.forEach(d => historial.push(d.data()));
+
+    const clienteCanjes = historial.filter(h => h.email && h.email.toLowerCase() === email.toLowerCase());
+    if (clienteCanjes.length === 0) return null;
+
+    // Get applied benefits to subtract points
+    const benSnap = await getDocs(collection(db, 'beneficios_historial'));
+    let puntosGastados = 0;
+    benSnap.forEach(d => {
+      const data = d.data();
+      if (data.email && data.email.toLowerCase() === email.toLowerCase()) {
+        puntosGastados += data.puntosDescontados || 0;
+      }
+    });
+
+    const totalGanados = clienteCanjes.reduce((sum, h) => sum + (h.puntos || 0), 0);
+    const puntosDisponibles = totalGanados - puntosGastados;
+    const lastCanje = clienteCanjes[clienteCanjes.length - 1];
+
+    return {
+      nombre: lastCanje.nombre,
+      email: lastCanje.email,
+      telefono: lastCanje.telefono || '',
+      puntosDisponibles: Math.max(0, puntosDisponibles),
+      totalGanados
+    };
+  }
+
+  async function addBeneficio() {
+    const nombre = document.getElementById('newBenNombre').value.trim();
+    const pts    = parseInt(document.getElementById('newBenPts').value);
+    const desc   = document.getElementById('newBenDesc').value.trim();
+
+    if (!nombre) { showMsg('ben','err','Ingresá el nombre del beneficio.'); return; }
+    if (!pts || pts < 1) { showMsg('ben','err','Ingresá los puntos requeridos.'); return; }
+
+    const id = 'ben_' + Date.now();
+    await setDoc(doc(db, 'beneficios', id), { nombre, puntos: pts, descripcion: desc, creado: new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' }) });
+
+    document.getElementById('newBenNombre').value = '';
+    document.getElementById('newBenPts').value = '';
+    document.getElementById('newBenDesc').value = '';
+
+    showMsg('ben','ok', `Beneficio "${nombre}" agregado (${pts} pts).`);
+    renderBenTable();
+  }
+
+  async function renderBenTable() {
+    const tbody = document.getElementById('benTableBody');
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">Cargando...</td></tr>';
+    const bens = await getBeneficios();
+    tbody.innerHTML = '';
+
+    const entries = Object.entries(bens);
+    if (entries.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No hay beneficios cargados aún</td></tr>';
+      return;
+    }
+
+    entries.forEach(([id, b], i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:var(--text-muted);font-size:0.75rem;">${String(i+1).padStart(2,'0')}</td>
+        <td style="font-weight:700;">🎁 ${b.nombre}</td>
+        <td style="color:var(--text-secondary);font-size:0.85rem;">${b.descripcion || '—'}</td>
+        <td class="td-pts">${b.puntos} pts</td>
+        <td><button class="btn btn-danger" data-id="${id}" data-nombre="${b.nombre}" id="delbtn_${id}"><span>Eliminar</span></button></td>
+      `;
+      tbody.appendChild(tr);
+      document.getElementById('delbtn_' + id).addEventListener('click', async () => {
+        await deleteDoc(doc(db, 'beneficios', id));
+        renderBenTable();
+        populateBenSelect();
+      });
+    });
+
+    populateBenSelect();
+  }
+
+  async function populateBenSelect() {
+    const bens = await getBeneficios();
+    const sel = document.getElementById('selectBeneficio');
+    sel.innerHTML = '<option value="">— Elegí un beneficio —</option>';
+    Object.entries(bens).forEach(([id, b]) => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = `${b.nombre} (${b.puntos} pts)`;
+      opt.dataset.pts = b.puntos;
+      opt.dataset.nombre = b.nombre;
+      sel.appendChild(opt);
+    });
+  }
+
+  async function buscarCliente() {
+    const email = document.getElementById('searchClientEmail').value.trim();
+    if (!email) return;
+
+    document.getElementById('clienteFound').style.display = 'none';
+    document.getElementById('clienteNotFound').style.display = 'none';
+
+    const cliente = await getClienteByEmail(email);
+    if (!cliente) {
+      document.getElementById('clienteNotFound').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('clienteNombre').textContent = cliente.nombre;
+    document.getElementById('clienteEmail2').textContent = cliente.email;
+    document.getElementById('clientePts').textContent = cliente.puntosDisponibles.toLocaleString();
+    document.getElementById('clienteFound').style.display = 'block';
+    document.getElementById('clienteNotFound').style.display = 'none';
+    await populateBenSelect();
+  }
+
+  async function aplicarBeneficio() {
+    const email = document.getElementById('searchClientEmail').value.trim();
+    const sel = document.getElementById('selectBeneficio');
+    const benId = sel.value;
+    if (!benId) { showMsg('apply','err','Seleccioná un beneficio.'); return; }
+
+    const benOpt = sel.options[sel.selectedIndex];
+    const ptsReq = parseInt(benOpt.dataset.pts);
+    const benNombre = benOpt.dataset.nombre;
+    const ptsDisp = parseInt(document.getElementById('clientePts').textContent.replace(/\./g,''));
+    const clienteNombre = document.getElementById('clienteNombre').textContent;
+
+    if (ptsDisp < ptsReq) {
+      showMsg('apply','err', `El cliente no tiene suficientes puntos. Tiene ${ptsDisp} pts y necesita ${ptsReq} pts.`);
+      return;
+    }
+
+    const fecha = new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const ptsRestantes = ptsDisp - ptsReq;
+
+    await addDoc(collection(db, 'beneficios_historial'), {
+      email, nombre: clienteNombre,
+      beneficio: benNombre,
+      puntosDescontados: ptsReq,
+      puntosRestantes,
+      fecha,
+      timestamp: new Date().toISOString()
+    });
+
+    document.getElementById('clientePts').textContent = ptsRestantes.toLocaleString();
+    showMsg('apply','ok', `✅ Beneficio "${benNombre}" aplicado a ${clienteNombre}. Se descontaron ${ptsReq} pts. Le quedan ${ptsRestantes} pts.`);
+    renderBenHistTable();
+  }
+
+  async function renderBenHistTable() {
+    const tbody = document.getElementById('benHistTableBody');
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Cargando...</td></tr>';
+    const hist = await getBenHistorial();
+    tbody.innerHTML = '';
+
+    if (hist.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No hay beneficios aplicados aún</td></tr>';
+      return;
+    }
+
+    hist.forEach((h, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:var(--text-muted);font-size:0.75rem;">${String(i+1).padStart(2,'0')}</td>
+        <td style="color:var(--text-secondary);font-size:0.82rem;">${h.fecha}</td>
+        <td style="font-weight:700;">${h.nombre}</td>
+        <td style="color:var(--text-secondary);">${h.email}</td>
+        <td>🎁 ${h.beneficio}</td>
+        <td style="color:var(--accent-red);font-family:Orbitron,monospace;font-size:0.85rem;">-${h.puntosDescontados} pts</td>
+        <td class="td-pts">${h.puntosRestantes} pts</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
   // ── EVENT LISTENERS ─────────────────────────────────
   document.getElementById('btnLogin').addEventListener('click', doLogin);
   document.getElementById('togglePassBtn').addEventListener('click', togglePass);
@@ -1299,6 +1639,14 @@
   });
   document.getElementById('searchCode').addEventListener('input', renderCodesTable);
   document.getElementById('searchHist').addEventListener('input', renderHistTable);
+  document.getElementById('btnAddBeneficio').addEventListener('click', addBeneficio);
+  document.getElementById('btnBuscarCliente').addEventListener('click', buscarCliente);
+  document.getElementById('btnAplicarBeneficio').addEventListener('click', aplicarBeneficio);
+  document.getElementById('tab-btn-beneficios').addEventListener('click', () => switchTab('beneficios'));
+  document.getElementById('btnExportBeneficios').addEventListener('click', () => exportCSV('beneficios'));
+  document.getElementById('searchClientEmail').addEventListener('keydown', e => {
+    if (e.key === 'Enter') buscarCliente();
+  });
 </script>
 </body>
 </html>
