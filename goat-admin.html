@@ -442,9 +442,17 @@
     // Auto-delete expired unused codes
     const now = new Date();
     for (const [code, t] of entries) {
-      if (!t.usado && t.venceISO && new Date(t.venceISO) < now) {
-        await deleteDoc(doc(db, "codigos", code));
-        console.log("Auto-deleted expired code:", code);
+      if (!t.usado && t.creado) {
+        const parts = t.creado.split("/");
+        if (parts.length === 3) {
+          const creadoDate = new Date(parts[2], parts[1]-1, parts[0]);
+          const venceDate = new Date(creadoDate);
+          venceDate.setDate(venceDate.getDate() + 30);
+          if (venceDate < now) {
+            await deleteDoc(doc(db, "codigos", code));
+            console.log("Auto-deleted expired code:", code);
+          }
+        }
       }
     }
     // Reload after deletions
@@ -455,15 +463,23 @@
     if (!freshEntries.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='8'>No hay codigos cargados</td></tr>"; return; }
 
     freshEntries.forEach(([code,t],i) => {
-      const venceDate = t.venceISO ? new Date(t.venceISO) : null;
-      const diasVence = venceDate ? Math.ceil((venceDate - now) / (1000*60*60*24)) : null;
-      let venceLabel = t.vence || "—";
+      // Calculate expiry from creado date (dd/mm/yyyy) + 30 days
+      let venceLabel = "—";
       let venceStyle = "color:var(--text-secondary);font-size:0.82rem;";
-      if (!t.usado && diasVence !== null) {
-        if (diasVence <= 5) venceStyle = "color:var(--accent-red);font-size:0.82rem;font-weight:700;";
-        else if (diasVence <= 10) venceStyle = "color:var(--accent-yellow);font-size:0.82rem;font-weight:600;";
-        else venceStyle = "color:var(--accent-green);font-size:0.82rem;";
-        venceLabel = venceLabel + (diasVence > 0 ? " (" + diasVence + "d)" : " ⚠️");
+      let diasVence = null;
+      if (t.creado && !t.usado) {
+        const parts = t.creado.split("/");
+        if (parts.length === 3) {
+          const creadoDate = new Date(parts[2], parts[1]-1, parts[0]);
+          const venceDate = new Date(creadoDate);
+          venceDate.setDate(venceDate.getDate() + 30);
+          diasVence = Math.ceil((venceDate - now) / (1000*60*60*24));
+          venceLabel = venceDate.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
+          if (diasVence <= 0) { venceStyle = "color:var(--accent-red);font-size:0.82rem;font-weight:700;"; venceLabel += " ⚠️"; }
+          else if (diasVence <= 5) { venceStyle = "color:var(--accent-red);font-size:0.82rem;font-weight:700;"; venceLabel += " (" + diasVence + "d)"; }
+          else if (diasVence <= 10) { venceStyle = "color:var(--accent-yellow);font-size:0.82rem;font-weight:600;"; venceLabel += " (" + diasVence + "d)"; }
+          else { venceStyle = "color:var(--accent-green);font-size:0.82rem;"; venceLabel += " (" + diasVence + "d)"; }
+        }
       }
       const tr = document.createElement("tr");
       tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td class='td-code'>" + code + "</td><td>" + t.emoji + " " + t.nombre + "</td><td class='td-pts'>+" + t.puntos + "</td><td><span class='td-used " + (t.usado?"yes":"no") + "'>" + (t.usado?"Canjeado":"Disponible") + "</span></td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + (t.creado||"—") + "</td><td style='" + venceStyle + "'>" + venceLabel + "</td><td><button class='btn btn-danger' id='del_" + code + "'><span>Eliminar</span></button></td>";
