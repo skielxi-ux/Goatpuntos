@@ -962,7 +962,7 @@
   const db = getFirestore(fbApp);
 
   const PASS = 'Argentina1?';
-  const EMOJIS = ['🥉','🥈','🥇','💎','⚡','🏆','⭐','🎮','🔥','👑','🎯','🎁','💰','🚀','🛡️','⚔️'];
+  const EMOJIS = ['🥉','🥈','🥇','💎','⚡','🏆','⭐','🎮','🔥','👑','🎯','🎁','💰','🚀','🛡','⚔'];
   let selectedEmoji = '🎮';
   let deleteTarget = null;
 
@@ -1221,8 +1221,7 @@
       });
       filename = 'goat_historial.csv';
     }
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('
-');
+        const csv = rows.map(function(r){ return r.map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
