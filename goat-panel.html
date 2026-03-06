@@ -1377,16 +1377,19 @@
   async function renderBenUsados() {
     const list = document.getElementById('benUsadosList');
     const empty = document.getElementById('benUsadosEmpty');
+    console.log('renderBenUsados called, list:', list, 'user:', currentUser);
     if (!list) return;
 
     const snap = await getDocs(collection(db, 'beneficios_historial'));
     const items = [];
     snap.forEach(d => {
       const h = d.data();
+      console.log('ben historial item:', h.email, 'vs', currentUser.email);
       if (h.email && h.email.toLowerCase() === currentUser.email.toLowerCase()) {
         items.push(h);
       }
     });
+    console.log('items found:', items.length);
 
     // Sort by timestamp desc
     items.sort((a,b) => (b.timestamp||'').localeCompare(a.timestamp||''));
