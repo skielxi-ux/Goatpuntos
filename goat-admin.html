@@ -945,28 +945,58 @@
 
 </div>
 
-<script>
-  const PASS = 'Argentina1?';
-  const LS_CODES = 'goat_codes';
-  const LS_HIST  = 'goat_historial';
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyAbM5y5t1PdESAqKYmXUAv79w_pfzkHqjg",
+    authDomain: "goatpuntos.firebaseapp.com",
+    projectId: "goatpuntos",
+    storageBucket: "goatpuntos.firebasestorage.app",
+    messagingSenderId: "428708500556",
+    appId: "1:428708500556:web:d9c0efe4920d807c2c90e9"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getFirestore(fbApp);
+
+  const PASS = 'Argentina1?';
   const EMOJIS = ['🥉','🥈','🥇','💎','⚡','🏆','⭐','🎮','🔥','👑','🎯','🎁','💰','🚀','🛡️','⚔️'];
   let selectedEmoji = '🎮';
   let deleteTarget = null;
 
-  // ── AUTH ──────────────────────────────────────────────
-  function togglePass() {
-    const input = document.getElementById('loginPass');
-    const btn = document.getElementById('toggleBtn');
-    if (input.type === 'password') {
-      input.type = 'text';
-      btn.style.color = 'var(--accent-blue)';
-    } else {
-      input.type = 'password';
-      btn.style.color = 'var(--text-muted)';
+  // ── FIREBASE HELPERS ──────────────────────────────────
+  async function getCodes() {
+    const snap = await getDocs(collection(db, 'codigos'));
+    const result = {};
+    snap.forEach(d => { result[d.id] = d.data(); });
+    return result;
+  }
+
+  async function saveCode(code, data) {
+    await setDoc(doc(db, 'codigos', code), data);
+  }
+
+  async function deleteCodeFB(code) {
+    await deleteDoc(doc(db, 'codigos', code));
+  }
+
+  async function getHist() {
+    try {
+      const snap = await getDocs(query(collection(db, 'historial'), orderBy('timestamp', 'desc')));
+      const result = [];
+      snap.forEach(d => result.push(d.data()));
+      return result;
+    } catch {
+      const snap = await getDocs(collection(db, 'historial'));
+      const result = [];
+      snap.forEach(d => result.push(d.data()));
+      return result;
     }
   }
 
+  // ── AUTH ──────────────────────────────────────────────
   function doLogin() {
     const val = document.getElementById('loginPass').value;
     if (val === PASS) {
@@ -988,19 +1018,6 @@
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('loginPass').value = '';
     document.getElementById('loginError').style.display = 'none';
-  }
-
-  // ── STORAGE ───────────────────────────────────────────
-  function getCodes() {
-    try { return JSON.parse(localStorage.getItem(LS_CODES)) || {}; } catch { return {}; }
-  }
-
-  function saveCodes(data) {
-    localStorage.setItem(LS_CODES, JSON.stringify(data));
-  }
-
-  function getHist() {
-    try { return JSON.parse(localStorage.getItem(LS_HIST)) || []; } catch { return []; }
   }
 
   // ── TABS ──────────────────────────────────────────────
@@ -1034,7 +1051,7 @@
   }
 
   // ── ADD CODE ──────────────────────────────────────────
-  function addCode() {
+  async function addCode() {
     const raw  = document.getElementById('newCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
     const name = document.getElementById('newName').value.trim();
     const pts  = parseInt(document.getElementById('newPts').value);
@@ -1043,12 +1060,11 @@
     if (!name)       { showMsg('add','err','Ingresá el nombre de la tarjeta.'); return; }
     if (!pts || pts < 1) { showMsg('add','err','Ingresá los puntos (mínimo 1).'); return; }
 
-    const codes = getCodes();
+    const codes = await getCodes();
     if (codes[raw]) { showMsg('add','err','Ese código ya existe.'); return; }
 
     const now = new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' });
-    codes[raw] = { nombre: name, puntos: pts, emoji: selectedEmoji, creado: now, usado: false };
-    saveCodes(codes);
+    await saveCode(raw, { nombre: name, puntos: pts, emoji: selectedEmoji, creado: now, usado: false });
 
     document.getElementById('newCode').value = '';
     document.getElementById('newName').value = '';
@@ -1060,10 +1076,11 @@
   }
 
   // ── RENDER CODES TABLE ────────────────────────────────
-  function renderCodesTable() {
-    const codes  = getCodes();
-    const q      = (document.getElementById('searchCode')?.value || '').toLowerCase();
-    const tbody  = document.getElementById('codesTableBody');
+  async function renderCodesTable() {
+    const tbody = document.getElementById('codesTableBody');
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Cargando...</td></tr>';
+    const codes = await getCodes();
+    const q = (document.getElementById('searchCode')?.value || '').toLowerCase();
     tbody.innerHTML = '';
 
     let entries = Object.entries(codes).filter(([code, t]) =>
@@ -1086,22 +1103,20 @@
         <td class="td-pts">+${t.puntos}</td>
         <td><span class="td-used ${t.usado ? 'yes' : 'no'}">${t.usado ? 'Canjeado' : 'Disponible'}</span></td>
         <td style="color:var(--text-secondary);font-size:0.82rem;">${t.creado || '—'}</td>
-        <td><button class="btn btn-danger" onclick="confirmDelete('${code}')"><span>Eliminar</span></button></td>
+        <td><button class="btn btn-danger" onclick="window._confirmDelete('${code}')"><span>Eliminar</span></button></td>
       `;
       tbody.appendChild(tr);
     });
   }
 
   // ── DELETE ────────────────────────────────────────────
-  function confirmDelete(code) {
+  async function confirmDelete(code) {
     deleteTarget = code;
-    const codes = getCodes();
+    const codes = await getCodes();
     const t = codes[code];
     document.getElementById('modalMsg').innerHTML = `¿Eliminar el código <strong>${code}</strong> (${t?.nombre || ''})? Esta acción no se puede deshacer.`;
-    document.getElementById('btnConfirmDel').onclick = () => {
-      const c = getCodes();
-      delete c[deleteTarget];
-      saveCodes(c);
+    document.getElementById('btnConfirmDel').onclick = async () => {
+      await deleteCodeFB(deleteTarget);
       closeModal();
       renderCodesTable();
       renderDashboard();
@@ -1109,15 +1124,17 @@
     document.getElementById('modalOverlay').classList.add('show');
   }
 
+  window._confirmDelete = confirmDelete;
+
   function closeModal() {
     document.getElementById('modalOverlay').classList.remove('show');
     deleteTarget = null;
   }
 
   // ── DASHBOARD ─────────────────────────────────────────
-  function renderDashboard() {
-    const codes = getCodes();
-    const hist  = getHist();
+  async function renderDashboard() {
+    const codes = await getCodes();
+    const hist  = await getHist();
     const total = Object.keys(codes).length;
     const used  = Object.values(codes).filter(c => c.usado).length;
     const clientsSet = new Set(hist.map(h => h.email));
@@ -1128,7 +1145,7 @@
     document.getElementById('dashCanjes').textContent = clientsSet.size;
 
     const container = document.getElementById('dashRecentList');
-    const recent = [...hist].reverse().slice(0, 8);
+    const recent = hist.slice(0, 8);
 
     if (recent.length === 0) {
       container.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;">Sin canjes aún</div>';
@@ -1152,13 +1169,14 @@
   }
 
   // ── HISTORIAL TABLE ───────────────────────────────────
-  function renderHistTable() {
-    const hist  = getHist();
-    const q     = (document.getElementById('searchHist')?.value || '').toLowerCase();
+  async function renderHistTable() {
     const tbody = document.getElementById('histTableBody');
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted);">Cargando...</td></tr>';
+    const hist  = await getHist();
+    const q     = (document.getElementById('searchHist')?.value || '').toLowerCase();
     tbody.innerHTML = '';
 
-    let entries = [...hist].reverse().filter(h =>
+    let entries = hist.filter(h =>
       !q || h.nombre?.toLowerCase().includes(q) || h.email?.toLowerCase().includes(q) || h.codigo?.toLowerCase().includes(q)
     );
 
@@ -1186,27 +1204,26 @@
   }
 
   // ── EXPORT CSV ────────────────────────────────────────
-  function exportCSV(type) {
+  async function exportCSV(type) {
     let rows, filename;
-
     if (type === 'codigos') {
-      const codes = getCodes();
+      const codes = await getCodes();
       rows = [['Código','Nombre','Puntos','Estado','Creado']];
       Object.entries(codes).forEach(([code, t]) => {
         rows.push([code, t.nombre, t.puntos, t.usado ? 'Canjeado' : 'Disponible', t.creado || '']);
       });
       filename = 'goat_codigos.csv';
     } else {
-      const hist = getHist();
+      const hist = await getHist();
       rows = [['Fecha','Nombre','Teléfono','Email','Código','Tarjeta','Puntos']];
       hist.forEach(h => {
         rows.push([h.fecha, h.nombre, h.telefono || '', h.email, h.codigo, h.tarjeta, h.puntos]);
       });
       filename = 'goat_historial.csv';
     }
-
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('
+');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename; a.click();
@@ -1229,20 +1246,47 @@
     setTimeout(() => { ok.classList.remove('show'); err.classList.remove('show'); }, 4000);
   }
 
+  // ── TOGGLE PASSWORD ───────────────────────────────────
+  function togglePass() {
+    const input = document.getElementById('loginPass');
+    const btn = document.getElementById('toggleBtn');
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.style.color = 'var(--accent-blue)';
+    } else {
+      input.type = 'password';
+      btn.style.color = 'var(--text-muted)';
+    }
+  }
+
   // ── FORMAT INPUT ──────────────────────────────────────
   document.getElementById('newCode').addEventListener('input', function() {
     this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
   });
 
-  // ── INIT ──────────────────────────────────────────────
-  function init() {
-    buildEmojiGrid();
-    renderDashboard();
-  }
+  // ── EXPOSE GLOBALS ────────────────────────────────────
+  window.doLogin = doLogin;
+  window.logout = logout;
+  window.switchTab = switchTab;
+  window.addCode = addCode;
+  window.closeModal = closeModal;
+  window.exportCSV = exportCSV;
+  window.togglePass = togglePass;
 
   // Close modal on overlay click
   document.getElementById('modalOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
+  });
+
+  // ── INIT ──────────────────────────────────────────────
+  async function init() {
+    buildEmojiGrid();
+    await renderDashboard();
+  }
+
+  // Keyboard login
+  document.getElementById('loginPass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
   });
 </script>
 </body>

@@ -796,29 +796,32 @@
 
 </div>
 
-<script>
-  // ===== TARJETAS VÁLIDAS =====
-  const tarjetas = {
-    'GOAT1234ABCD': { nombre: 'Tarjeta Bronce', puntos: 100, emoji: '🥉' },
-    'GOAT5678EFGH': { nombre: 'Tarjeta Plata', puntos: 250, emoji: '🥈' },
-    'GOATGOLD9999': { nombre: 'Tarjeta Oro', puntos: 500, emoji: '🥇' },
-    'GOATPRO2025X': { nombre: 'Tarjeta Pro', puntos: 750, emoji: '💎' },
-    'GOATEPIC1337': { nombre: 'Tarjeta Épica', puntos: 1000, emoji: '⚡' },
-    'GOATLEGEND00': { nombre: 'Tarjeta Leyenda', puntos: 2000, emoji: '🏆' },
-    'GOATVIP00001': { nombre: 'Tarjeta VIP', puntos: 300, emoji: '⭐' },
-    'GOATGAMER777': { nombre: 'Tarjeta Gamer', puntos: 150, emoji: '🎮' },
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAbM5y5t1PdESAqKYmXUAv79w_pfzkHqjg",
+    authDomain: "goatpuntos.firebaseapp.com",
+    projectId: "goatpuntos",
+    storageBucket: "goatpuntos.firebasestorage.app",
+    messagingSenderId: "428708500556",
+    appId: "1:428708500556:web:d9c0efe4920d807c2c90e9"
   };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getFirestore(fbApp);
 
   const LEVELS = [0, 500, 1200, 2500, 5000, 10000];
   const LEVEL_NAMES = ['Novato', 'Gamer', 'Pro', 'Elite', 'Leyenda', 'GOAT'];
 
   let state = {
     nombre: '',
+    phone: '',
     email: '',
     puntos: 0,
     canjes: 0,
-    historial: [],
-    usados: new Set()
+    historial: []
   };
 
   function normalizeCode(c) {
@@ -851,7 +854,6 @@
     document.getElementById('progressLabel').textContent = `${pts} / ${nextThreshold} pts`;
     document.getElementById('currentLevel').textContent = LEVEL_NAMES[lvlIdx] || LEVEL_NAMES[LEVEL_NAMES.length - 1];
     document.getElementById('nextLevel').textContent = LEVEL_NAMES[lvlIdx + 1] || '— MAX —';
-
     document.getElementById('totalBadge').textContent = `${pts.toLocaleString()} PTS TOTAL`;
 
     const nombre = document.getElementById('inputName').value.trim() || state.nombre;
@@ -859,11 +861,6 @@
       document.getElementById('profileName').textContent = nombre.toUpperCase();
       document.getElementById('profileDisplay').style.display = 'block';
     }
-    // Highlight empty required fields
-    ['inputName','inputPhone','inputEmail'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.borderColor = '';
-    });
   }
 
   function renderHistory() {
@@ -911,51 +908,86 @@
     }, 4000);
   }
 
-  function canjear() {
+  async function canjear() {
     const nombre = document.getElementById('inputName').value.trim();
-    const phone = document.getElementById('inputPhone').value.trim();
-    const email = document.getElementById('inputEmail').value.trim();
+    const phone  = document.getElementById('inputPhone').value.trim();
+    const email  = document.getElementById('inputEmail').value.trim();
     const rawCode = document.getElementById('inputCode').value.trim();
-    const code = normalizeCode(rawCode);
+    const code   = normalizeCode(rawCode);
 
     if (!nombre) { showAlert('err', 'Ingresá tu nombre y apellido.'); return; }
-    if (!phone) { showAlert('err', 'Ingresá tu teléfono.'); return; }
+    if (!phone)  { showAlert('err', 'Ingresá tu teléfono.'); return; }
     if (!email || !email.includes('@')) { showAlert('err', 'Ingresá un e-mail válido.'); return; }
-    if (!code) { showAlert('err', 'Ingresá el código de la tarjeta.'); return; }
+    if (!code)   { showAlert('err', 'Ingresá el código de la tarjeta.'); return; }
 
-    if (!tarjetas[code]) {
-      showAlert('err', 'Código inválido. Verificá que sea correcto.');
-      return;
+    // Disable button while checking
+    const btn = document.getElementById('btnCanjear');
+    btn.disabled = true;
+    btn.querySelector('span').textContent = 'Verificando...';
+
+    try {
+      // Check code in Firebase
+      const codeRef = doc(db, 'codigos', code);
+      const codeSnap = await getDoc(codeRef);
+
+      if (!codeSnap.exists()) {
+        showAlert('err', 'Código inválido. Verificá que sea correcto.');
+        return;
+      }
+
+      const t = codeSnap.data();
+
+      if (t.usado) {
+        showAlert('err', 'Esta tarjeta ya fue canjeada anteriormente.');
+        return;
+      }
+
+      // Mark as used in Firebase
+      await setDoc(codeRef, { ...t, usado: true });
+
+      // Save canje to historial in Firebase
+      const now = new Date();
+      const fecha = now.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+      await addDoc(collection(db, 'historial'), {
+        codigo: code,
+        nombre: nombre,
+        telefono: phone,
+        email: email,
+        tarjeta: t.nombre,
+        puntos: t.puntos,
+        emoji: t.emoji,
+        fecha: fecha,
+        timestamp: now.toISOString()
+      });
+
+      // Update local state
+      state.nombre = nombre;
+      state.phone  = phone;
+      state.email  = email;
+      state.puntos += t.puntos;
+      state.canjes += 1;
+
+      state.historial.push({
+        codigo: code,
+        nombre: t.nombre,
+        puntos: t.puntos,
+        emoji: t.emoji,
+        fecha
+      });
+
+      document.getElementById('inputCode').value = '';
+      renderHistory();
+      updateUI();
+      showAlert('ok', `¡Canjeaste "${t.nombre}"! +${t.puntos} puntos acumulados.`);
+
+    } catch(err) {
+      console.error(err);
+      showAlert('err', 'Error de conexión. Intentá de nuevo.');
+    } finally {
+      btn.disabled = false;
+      btn.querySelector('span').textContent = '⚡  Canjear ahora';
     }
-
-    if (state.usados.has(code)) {
-      showAlert('err', 'Esta tarjeta ya fue canjeada anteriormente.');
-      return;
-    }
-
-    const t = tarjetas[code];
-    state.nombre = nombre;
-    state.phone = phone;
-    state.email = email;
-    state.puntos += t.puntos;
-    state.canjes += 1;
-    state.usados.add(code);
-
-    const now = new Date();
-    const fecha = now.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' });
-
-    state.historial.push({
-      codigo: code,
-      nombre: t.nombre,
-      puntos: t.puntos,
-      emoji: t.emoji,
-      fecha
-    });
-
-    document.getElementById('inputCode').value = '';
-    renderHistory();
-    updateUI();
-    showAlert('ok', `¡Canjeaste "${t.nombre}"! +${t.puntos} puntos acumulados.`);
   }
 
   // Format code input automatically
@@ -963,6 +995,9 @@
     let val = this.value.replace(/-/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
     this.value = val;
   });
+
+  // Expose canjear globally
+  window.canjear = canjear;
 
   // Init
   updateUI();
