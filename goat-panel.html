@@ -138,14 +138,118 @@
   .progress-bar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
   .progress-fill { height:100%; background:linear-gradient(90deg,var(--accent-blue),var(--accent-green)); border-radius:3px; transition:width 0.8s ease; }
 
+  /* TABLET */
+  @media(max-width:1024px){
+    :root { --sidebar-w: 220px; }
+    .main-content { padding:24px 20px; }
+  }
+
+  /* MOBILE */
   @media(max-width:768px){
-    .app-body { grid-template-columns:1fr; }
-    .sidebar { position:static; height:auto; border-right:none; border-bottom:1px solid var(--border); padding:12px 0; display:flex; overflow-x:auto; gap:0; }
+    :root { --sidebar-w: 100%; }
+
+    .topbar { padding:10px 16px; }
+    .topbar-logo { height:28px; }
+    .topbar-greeting { font-size:0.75rem; }
+    .btn-cerrar { font-size:0.5rem; padding:4px 10px; }
+
+    /* Hero centrado y más pequeño */
+    .hero-wrap { padding:12px 16px 0 !important; }
+    .hero-wrap img { max-width:100% !important; border-radius:8px !important; }
+
+    /* Layout vertical en mobile */
+    .app-body {
+      grid-template-columns: 1fr;
+      min-height:auto;
+    }
+
+    /* Sidebar se convierte en nav horizontal */
+    .sidebar {
+      position:sticky;
+      top:49px;
+      z-index:40;
+      height:auto;
+      border-right:none;
+      border-bottom:1px solid var(--border);
+      padding:0;
+      display:flex;
+      flex-direction:row;
+      overflow-x:auto;
+      background:rgba(3,10,18,0.95);
+      backdrop-filter:blur(10px);
+      -ms-overflow-style:none;
+      scrollbar-width:none;
+    }
+    .sidebar::-webkit-scrollbar { display:none; }
+
+    /* Ocultar widget de puntos y label en mobile */
     .sidebar-pts-widget { display:none; }
     .sidebar-section-label { display:none; }
-    .nav-item { border-left:none; border-bottom:2px solid transparent; padding:10px 16px; white-space:nowrap; }
-    .nav-item.active { border-bottom-color:var(--accent-green); border-left-color:transparent; }
-    .main-content { padding:20px 16px; }
+
+    /* Nav items horizontales */
+    .nav-item {
+      border-left:none;
+      border-bottom:2px solid transparent;
+      padding:12px 16px;
+      white-space:nowrap;
+      flex-shrink:0;
+      justify-content:center;
+      flex-direction:column;
+      align-items:center;
+      gap:4px;
+      min-width:80px;
+    }
+    .nav-item.active {
+      border-bottom-color:var(--accent-green);
+      border-left-color:transparent;
+      background:rgba(0,229,160,0.06);
+    }
+    .nav-label { font-size:0.5rem; letter-spacing:0.1em; }
+    .nav-icon { font-size:1.2rem; width:auto; }
+
+    /* Main content */
+    .main-content { padding:16px 12px; }
+
+    /* Panel cards */
+    .panel-body { padding:16px; }
+    .panel-header { padding:14px 16px; }
+    .panel-title { font-size:0.62rem; }
+
+    /* Profile grid - single column on mobile */
+    .profile-grid { grid-template-columns:1fr; gap:10px; }
+
+    /* Points widget as banner on mobile */
+    .mobile-pts-banner {
+      display:flex !important;
+      align-items:center;
+      justify-content:space-between;
+      background:var(--bg-panel);
+      border-bottom:1px solid var(--border-glow);
+      padding:10px 16px;
+      gap:12px;
+    }
+    .mobile-pts-val { font-family:"Orbitron",monospace; font-size:1.4rem; font-weight:900; color:var(--accent-green); }
+    .mobile-pts-label { font-size:0.55rem; letter-spacing:0.15em; color:var(--text-muted); text-transform:uppercase; }
+    .mobile-pts-level { font-family:"Orbitron",monospace; font-size:0.55rem; font-weight:700; color:var(--accent-blue); background:rgba(30,144,255,0.1); border:1px solid rgba(30,144,255,0.3); border-radius:2px; padding:2px 7px; }
+
+    /* History items */
+    .history-item { grid-template-columns:28px 1fr auto; gap:8px; padding:12px 0; }
+    .history-item .item-date { display:none; }
+    .item-name { font-size:0.88rem; }
+    .item-code { font-size:0.6rem; }
+    .item-pts { font-size:0.82rem; }
+
+    /* Login box */
+    .login-box { padding:28px 20px; margin:16px; }
+
+    /* Canjear button */
+    .btn-canjear { font-size:0.62rem; padding:12px; }
+  }
+
+  @media(max-width:400px){
+    .nav-item { min-width:70px; padding:10px 12px; }
+    .nav-label { display:none; }
+    .nav-icon { font-size:1.4rem; }
   }
 </style>
 </head>
@@ -192,8 +296,22 @@
     </div>
   </div>
 
+  <!-- MOBILE POINTS BANNER -->
+  <div class="mobile-pts-banner" style="display:none;" id="mobilePtsBanner">
+    <div>
+      <div class="mobile-pts-val" id="mobilePtsVal">0</div>
+      <div class="mobile-pts-label">Puntos disponibles</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="mobile-pts-level" id="mobilePtsLevel">Novato</div>
+      <div style="margin-top:6px;width:120px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+        <div id="mobilePtsFill" style="height:100%;background:linear-gradient(90deg,var(--accent-blue),var(--accent-green));width:0%;transition:width 0.8s;"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- HERO -->
-  <div style="display:flex;justify-content:center;padding:16px 24px 0;background:transparent;">
+  <div class="hero-wrap" style="display:flex;justify-content:center;padding:16px 24px 0;background:transparent;">
     <img src="https://raw.githubusercontent.com/skielxi-ux/Goatpuntos/main/hero.png" alt="GOAT Esports Heroes" style="max-width:700px;width:100%;border-radius:12px;display:block;">
   </div>
 
@@ -432,6 +550,15 @@
     document.getElementById("sidebarProgressFill").style.width = pct + "%";
     document.getElementById("sidebarCurrentLevel").textContent = LEVEL_NAMES[lvlIdx];
     document.getElementById("sidebarNextLevel").textContent = lvlIdx < LEVELS.length - 1 ? LEVEL_NAMES[nextIdx] : "MAX";
+
+    // Mobile banner
+    const mob = document.getElementById("mobilePtsBanner");
+    if (mob) {
+      document.getElementById("mobilePtsVal").textContent = pts.toLocaleString();
+      document.getElementById("mobilePtsLevel").textContent = LEVEL_NAMES[lvlIdx];
+      document.getElementById("mobilePtsFill").style.width = pct + "%";
+      if (window.innerWidth <= 768) mob.style.display = "flex";
+    }
 
     document.getElementById("profNombre").textContent = currentUser.nombre;
     document.getElementById("profEmail").textContent = currentUser.email;
