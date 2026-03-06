@@ -417,7 +417,11 @@
     const codes = await getCodes();
     if (codes[raw]) { showMsg("add","err","Ese codigo ya existe."); return; }
     const now = new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
-    await setDoc(doc(db,"codigos",raw), {nombre:name,puntos:pts,emoji:selectedEmoji,creado:now,usado:false});
+    const venceDate = new Date();
+    venceDate.setDate(venceDate.getDate() + 30);
+    const vence = venceDate.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
+    const venceISO = venceDate.toISOString();
+    await setDoc(doc(db,"codigos",raw), {nombre:name,puntos:pts,emoji:selectedEmoji,creado:now,usado:false,vence,venceISO});
     document.getElementById("newCode").value = "";
     document.getElementById("newName").value = "";
     document.getElementById("newPts").value = "";
