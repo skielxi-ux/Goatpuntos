@@ -777,10 +777,10 @@
     <div class="login-sub">Panel Administrador</div>
     <label class="login-label">Contraseña</label>
     <div style="position:relative;margin-bottom:20px;">
-      <input class="login-input" type="password" id="loginPass" placeholder="••••••••••" onkeydown="if(event.key==='Enter') doLogin()" style="margin-bottom:0;padding-right:48px;">
-      <button onclick="togglePass()" id="toggleBtn" style="position:absolute;right:0;top:0;bottom:0;width:44px;background:transparent;border:none;cursor:pointer;color:var(--text-muted);font-size:1.1rem;transition:color 0.2s;" title="Mostrar/ocultar contraseña">👁</button>
+      <input class="login-input" type="password" id="loginPass" placeholder="••••••••••"  style="margin-bottom:0;padding-right:48px;">
+      <button id="togglePassBtn" id="toggleBtn" style="position:absolute;right:0;top:0;bottom:0;width:44px;background:transparent;border:none;cursor:pointer;color:var(--text-muted);font-size:1.1rem;transition:color 0.2s;" title="Mostrar/ocultar contraseña">👁</button>
     </div>
-    <button class="login-btn" onclick="doLogin()"><span>🔐 &nbsp;Ingresar</span></button>
+    <button class="login-btn" id="btnLogin"><span>🔐 &nbsp;Ingresar</span></button>
     <div class="login-error" id="loginError">Contraseña incorrecta</div>
   </div>
 </div>
@@ -791,7 +791,7 @@
     <div class="modal-title">⚠ Confirmar eliminación</div>
     <div class="modal-msg" id="modalMsg"></div>
     <div class="modal-btns">
-      <button class="btn btn-cancel" onclick="closeModal()"><span>Cancelar</span></button>
+      <button class="btn btn-cancel" id="btnCancelModal"><span>Cancelar</span></button>
       <button class="btn btn-confirm-del" id="btnConfirmDel"><span>Eliminar</span></button>
     </div>
   </div>
@@ -803,14 +803,14 @@
     <div class="header-logo">GOAT</div>
     <div class="admin-badge">Admin</div>
   </div>
-  <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+  <button class="btn-logout" id="btnLogout">Cerrar sesión</button>
 </header>
 
 <!-- TABS -->
 <div class="tabs" id="mainTabs" style="display:none;">
-  <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
-  <div class="tab" onclick="switchTab('codigos')">Códigos</div>
-  <div class="tab" onclick="switchTab('historial')">Historial canjes</div>
+  <div class="tab active" id="tab-btn-dashboard">Dashboard</div>
+  <div class="tab" id="tab-btn-codigos">Códigos</div>
+  <div class="tab" id="tab-btn-historial">Historial canjes</div>
 </div>
 
 <!-- MAIN CONTENT -->
@@ -867,7 +867,7 @@
             <label class="form-label">Puntos</label>
             <input class="form-input" id="newPts" type="number" placeholder="Ej: 500" min="1" autocomplete="off">
           </div>
-          <button class="btn btn-add" onclick="addCode()"><span>+ Agregar</span></button>
+          <button class="btn btn-add" id="btnAddCode"><span>+ Agregar</span></button>
         </div>
 
         <div style="margin-top:16px;">
@@ -883,11 +883,11 @@
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">🃏 Códigos cargados</div>
-        <button class="btn btn-export" onclick="exportCSV('codigos')"><span>⬇ Exportar CSV</span></button>
+        <button class="btn btn-export" id="btnExportCodigos"><span>⬇ Exportar CSV</span></button>
       </div>
       <div class="panel-body" style="padding-bottom:0;">
         <div class="search-row">
-          <input class="search-input" id="searchCode" placeholder="Buscar código o nombre..." oninput="renderCodesTable()">
+          <input class="search-input" id="searchCode" placeholder="Buscar código o nombre...">
           <span class="result-count" id="codeCount"></span>
         </div>
       </div>
@@ -915,11 +915,11 @@
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">📜 Historial de canjes</div>
-        <button class="btn btn-export" onclick="exportCSV('historial')"><span>⬇ Exportar CSV</span></button>
+        <button class="btn btn-export" id="btnExportHistorial"><span>⬇ Exportar CSV</span></button>
       </div>
       <div class="panel-body" style="padding-bottom:0;">
         <div class="search-row">
-          <input class="search-input" id="searchHist" placeholder="Buscar por nombre, email o código..." oninput="renderHistTable()">
+          <input class="search-input" id="searchHist" placeholder="Buscar por nombre, email o código...">
           <span class="result-count" id="histCount"></span>
         </div>
       </div>
@@ -1283,10 +1283,22 @@
     await renderDashboard();
   }
 
-  // Keyboard login
+  // ── EVENT LISTENERS ─────────────────────────────────
+  document.getElementById('btnLogin').addEventListener('click', doLogin);
+  document.getElementById('togglePassBtn').addEventListener('click', togglePass);
+  document.getElementById('btnLogout').addEventListener('click', logout);
+  document.getElementById('tab-btn-dashboard').addEventListener('click', () => switchTab('dashboard'));
+  document.getElementById('tab-btn-codigos').addEventListener('click', () => switchTab('codigos'));
+  document.getElementById('tab-btn-historial').addEventListener('click', () => switchTab('historial'));
+  document.getElementById('btnAddCode').addEventListener('click', addCode);
+  document.getElementById('btnExportCodigos').addEventListener('click', () => exportCSV('codigos'));
+  document.getElementById('btnExportHistorial').addEventListener('click', () => exportCSV('historial'));
+  document.getElementById('btnCancelModal').addEventListener('click', closeModal);
   document.getElementById('loginPass').addEventListener('keydown', e => {
     if (e.key === 'Enter') doLogin();
   });
+  document.getElementById('searchCode').addEventListener('input', renderCodesTable);
+  document.getElementById('searchHist').addEventListener('input', renderHistTable);
 </script>
 </body>
 </html>
