@@ -583,7 +583,7 @@
     const ptsRestantes = ptsDisp - ptsReq;
     await addDoc(collection(db,"beneficios_historial"), {
       email, nombre:clienteNombre, beneficio:benNombre,
-      puntosDescontados:ptsReq, puntosRestantes, fecha,
+      puntosDescontados:ptsReq, puntosRestantes:ptsRestantes, fecha,
       timestamp:new Date().toISOString()
     });
     document.getElementById("clientePts").textContent = ptsRestantes.toLocaleString();
