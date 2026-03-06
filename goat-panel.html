@@ -1033,6 +1033,19 @@
     </div>
   </div>
 
+  <!-- BENEFICIOS USADOS -->
+  <div class="grid-right" style="grid-column: 1 / -1;">
+    <div class="card" style="margin-top:0;">
+      <div class="card-header">
+        <div class="card-icon">🎁</div>
+        <div class="card-title">Puntos canjeados</div>
+      </div>
+      <div id="benUsadosList">
+        <div id="benUsadosEmpty" style="text-align:center;padding:32px 16px;color:var(--text-muted);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;">Aún no canjeaste puntos por beneficios</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script type="module">
@@ -1185,6 +1198,7 @@
 
     updateUI();
     renderHistory();
+    await renderBenUsados();
   }
 
   // ── LOGOUT ────────────────────────────────────────────
@@ -1202,6 +1216,7 @@
     document.getElementById('inputCode').value = '';
     updateUI();
     renderHistory();
+    await renderBenUsados();
   }
 
   // ── HELPERS ───────────────────────────────────────────
@@ -1356,6 +1371,50 @@
       btn.disabled = false;
       btn.querySelector('span').textContent = '⚡  Canjear ahora';
     }
+  }
+
+  // ── BENEFICIOS USADOS ────────────────────────────────
+  async function renderBenUsados() {
+    const list = document.getElementById('benUsadosList');
+    const empty = document.getElementById('benUsadosEmpty');
+    if (!list) return;
+
+    const snap = await getDocs(collection(db, 'beneficios_historial'));
+    const items = [];
+    snap.forEach(d => {
+      const h = d.data();
+      if (h.email && h.email.toLowerCase() === currentUser.email.toLowerCase()) {
+        items.push(h);
+      }
+    });
+
+    // Sort by timestamp desc
+    items.sort((a,b) => (b.timestamp||'').localeCompare(a.timestamp||''));
+
+    if (items.length === 0) {
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+
+    if (empty) empty.style.display = 'none';
+
+    // Remove old items
+    list.querySelectorAll('.ben-usado-item').forEach(el => el.remove());
+
+    items.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.className = 'history-item ben-usado-item';
+      div.style.animationDelay = (i * 0.05) + 's';
+      div.innerHTML =
+        '<div class="item-num">' + String(i+1).padStart(2,'0') + '</div>' +
+        '<div class="item-info">' +
+          '<div class="item-name">🎁 ' + item.beneficio + '</div>' +
+          '<div class="item-code">' + item.email + '</div>' +
+        '</div>' +
+        '<div class="item-date">' + item.fecha + '</div>' +
+        '<div class="item-pts" style="color:var(--accent-red);">-' + item.puntosDescontados + '<span>puntos</span></div>';
+      list.appendChild(div);
+    });
   }
 
   // ── EVENT LISTENERS ───────────────────────────────────
