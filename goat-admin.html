@@ -197,6 +197,10 @@
       <input class="form-input" id="editBenNombre" autocomplete="off">
     </div>
     <div class="form-group" style="margin-bottom:14px;">
+      <label class="form-label">Tipo de tarjeta</label>
+      <input class="form-input" id="editBenTipo" placeholder="Ej: Bronce, Oro, VIP" autocomplete="off">
+    </div>
+    <div class="form-group" style="margin-bottom:14px;">
       <label class="form-label">Puntos requeridos</label>
       <input class="form-input" id="editBenPts" type="number" min="1">
     </div>
@@ -287,6 +291,7 @@
       <div class="panel-body">
         <div class="form-row">
           <div class="form-group"><label class="form-label">Nombre del beneficio</label><input class="form-input" id="newBenNombre" placeholder="Ej: 1 hora gratis" autocomplete="off"></div>
+          <div class="form-group"><label class="form-label">Tipo de tarjeta</label><input class="form-input" id="newBenTipo" placeholder="Ej: Bronce, Oro, VIP" autocomplete="off"></div>
           <div class="form-group"><label class="form-label">Puntos requeridos</label><input class="form-input" id="newBenPts" type="number" placeholder="Ej: 100" min="1"></div>
           <div class="form-group"><label class="form-label">Descripcion (opcional)</label><input class="form-input" id="newBenDesc" placeholder="Ej: Una hora en cualquier estacion" autocomplete="off"></div>
           <button class="btn btn-add" id="btnAddBeneficio"><span>+ Agregar</span></button>
@@ -297,7 +302,7 @@
     </div>
     <div class="panel">
       <div class="panel-header"><div class="panel-title">Beneficios disponibles</div></div>
-      <div class="table-wrap"><table><thead><tr><th>#</th><th>Beneficio</th><th>Descripcion</th><th>Puntos</th><th></th></tr></thead><tbody id="benTableBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>Beneficio</th><th>Tipo</th><th>Descripcion</th><th>Puntos</th><th></th></tr></thead><tbody id="benTableBody"></tbody></table></div>
     </div>
     <div class="panel">
       <div class="panel-header"><div class="panel-title">Aplicar beneficio a cliente</div></div>
@@ -624,14 +629,16 @@
   // BENEFICIOS
   async function addBeneficio() {
     const nombre = document.getElementById("newBenNombre").value.trim();
+    const tipo = document.getElementById("newBenTipo").value.trim();
     const pts = parseInt(document.getElementById("newBenPts").value);
     const desc = document.getElementById("newBenDesc").value.trim();
     if (!nombre) { showMsg("ben","err","Ingresa el nombre del beneficio."); return; }
     if (!pts || pts < 1) { showMsg("ben","err","Ingresa los puntos requeridos."); return; }
     const id = "ben_" + Date.now();
     const fecha = new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
-    await setDoc(doc(db,"beneficios",id), {nombre,puntos:pts,descripcion:desc,creado:fecha});
+    await setDoc(doc(db,"beneficios",id), {nombre,tipo:tipo||"",puntos:pts,descripcion:desc,creado:fecha});
     document.getElementById("newBenNombre").value = "";
+    document.getElementById("newBenTipo").value = "";
     document.getElementById("newBenPts").value = "";
     document.getElementById("newBenDesc").value = "";
     showMsg("ben","ok","Beneficio " + nombre + " agregado.");
@@ -647,7 +654,7 @@
     if (!entries.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='5'>No hay beneficios cargados</td></tr>"; return; }
     entries.forEach(([id,b],i) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td style='font-weight:700;'>🎁 " + b.nombre + "</td><td style='color:var(--text-secondary);font-size:0.85rem;'>" + (b.descripcion||"—") + "</td><td class='td-pts'>" + b.puntos + " pts</td><td style='display:flex;gap:8px;'><button class='btn' id='editben_" + id + "' style='border-color:var(--accent-blue);color:var(--accent-blue);padding:6px 12px;font-size:0.58rem;'><span>Editar</span></button><button class='btn btn-danger' id='delben_" + id + "'><span>Eliminar</span></button></td>";
+      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td style='font-weight:700;'>🎁 " + b.nombre + "</td><td style='color:var(--text-secondary);font-size:0.85rem;'>" + (b.tipo||"—") + "</td><td style='color:var(--text-secondary);font-size:0.85rem;'>" + (b.descripcion||"—") + "</td><td class='td-pts'>" + b.puntos + " pts</td><td style='display:flex;gap:8px;'><button class='btn' id='editben_" + id + "' style='border-color:var(--accent-blue);color:var(--accent-blue);padding:6px 12px;font-size:0.58rem;'><span>Editar</span></button><button class='btn btn-danger' id='delben_" + id + "'><span>Eliminar</span></button></td>";
       tbody.appendChild(tr);
       document.getElementById("editben_"+id).onclick = () => openEditBen(id, b);
       document.getElementById("delben_"+id).onclick = async () => { await deleteDoc(doc(db,"beneficios",id)); renderBenTable(); populateBenSelect(); };
@@ -658,6 +665,7 @@
   function openEditBen(id, b) {
     document.getElementById("editBenId").value = id;
     document.getElementById("editBenNombre").value = b.nombre || "";
+    document.getElementById("editBenTipo").value = b.tipo || "";
     document.getElementById("editBenPts").value = b.puntos || "";
     document.getElementById("editBenDesc").value = b.descripcion || "";
     document.getElementById("editBenOk").classList.remove("show");
@@ -668,11 +676,12 @@
   async function saveEditBen() {
     const id = document.getElementById("editBenId").value;
     const nombre = document.getElementById("editBenNombre").value.trim();
+    const tipo = document.getElementById("editBenTipo").value.trim();
     const pts = parseInt(document.getElementById("editBenPts").value);
     const desc = document.getElementById("editBenDesc").value.trim();
     if (!nombre) { document.getElementById("editBenErrMsg").textContent = "Ingresa el nombre."; document.getElementById("editBenErr").classList.add("show"); return; }
     if (!pts || pts < 1) { document.getElementById("editBenErrMsg").textContent = "Ingresa los puntos."; document.getElementById("editBenErr").classList.add("show"); return; }
-    await setDoc(doc(db,"beneficios",id), {nombre, puntos:pts, descripcion:desc}, {merge:true});
+    await setDoc(doc(db,"beneficios",id), {nombre, tipo:tipo||"", puntos:pts, descripcion:desc}, {merge:true});
     document.getElementById("editBenOkMsg").textContent = "Beneficio actualizado.";
     document.getElementById("editBenOk").classList.add("show");
     setTimeout(() => {
