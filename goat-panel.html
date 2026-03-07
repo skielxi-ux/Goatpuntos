@@ -99,6 +99,11 @@
   .form-input { background:var(--bg-input); border:1px solid var(--border); border-radius:3px; padding:11px 14px; color:var(--text-primary); font-family:'Rajdhani',sans-serif; font-size:1rem; outline:none; transition:border-color 0.3s; width:100%; }
   .form-input:focus { border-color:var(--accent-blue); }
   .code-input { font-family:'Orbitron',monospace; font-size:0.85rem; letter-spacing:0.15em; text-transform:uppercase; }
+  .vence-preview { margin-top:10px; padding:10px 14px; border-radius:3px; font-size:0.85rem; font-weight:600; display:none; align-items:center; gap:10px; }
+  .vence-preview.show { display:flex; }
+  .vence-ok { background:rgba(30,144,255,0.07); border:1px solid rgba(30,144,255,0.3); color:var(--accent-blue); }
+  .vence-warn { background:rgba(255,208,96,0.07); border:1px solid rgba(255,208,96,0.3); color:var(--accent-yellow); }
+  .vence-exp { background:rgba(255,64,96,0.07); border:1px solid rgba(255,64,96,0.3); color:var(--accent-red); }
 
   /* BUTTON */
   .btn-canjear { width:100%; margin-top:8px; padding:14px; background:transparent; border:1px solid var(--accent-green); border-radius:3px; color:var(--accent-green); font-family:'Orbitron',monospace; font-size:0.7rem; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; cursor:pointer; position:relative; overflow:hidden; transition:color 0.3s,box-shadow 0.3s; }
@@ -410,6 +415,7 @@
               <label class="form-label">Código de tarjeta <span class="req">*</span></label>
               <input class="form-input code-input" id="inputCode" placeholder="Ingresá el código" maxlength="20" autocomplete="off">
             </div>
+            <div class="vence-preview" id="vencePreview"><span id="venceIcon"></span><span id="venceMsg"></span></div>
             <button class="btn-canjear" id="btnCanjear"><span>⚡ &nbsp;Canjear ahora</span></button>
             <div class="alert alert-success" id="alertOk"><span>✓</span><span id="alertOkMsg"></span></div>
             <div class="alert alert-error" id="alertErr"><span>✗</span><span id="alertErrMsg"></span></div>
@@ -660,6 +666,13 @@
       if (!codeSnap.exists()) { showAlert("err","Código inválido."); return; }
       const t = codeSnap.data();
       if (t.usado) { showAlert("err","Esta tarjeta ya fue canjeada."); return; }
+      if (t.creado) {
+        const parts = t.creado.split("/");
+        const created = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+        const expires = new Date(created); expires.setDate(expires.getDate() + 30);
+        const today = new Date(); today.setHours(0,0,0,0);
+        if (expires < today) { showAlert("err","Esta tarjeta venció el " + expires.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}) + "."); return; }
+      }
       await setDoc(codeRef, {...t, usado:true});
       const fecha = new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
       await addDoc(collection(db,"historial"), {
@@ -762,7 +775,41 @@
   document.getElementById("btnCerrarSesion").addEventListener("click", logout);
   document.getElementById("btnCanjear").addEventListener("click", canjear);
   document.getElementById("loginEmail").addEventListener("keydown", e => { if(e.key==="Enter") ingresar(); });
-  document.getElementById("inputCode").addEventListener("input", function(){ this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,""); });
+  document.getElementById("inputCode").addEventListener("input", async function(){
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,"");
+    const code = this.value.trim();
+    const preview = document.getElementById("vencePreview");
+    if (code.length < 4) { preview.className = "vence-preview"; return; }
+    const codeSnap = await getDoc(doc(db,"codigos",code));
+    if (!codeSnap.exists()) { preview.className = "vence-preview"; return; }
+    const t = codeSnap.data();
+    if (t.usado) { preview.className = "vence-preview"; return; }
+    if (!t.creado) { preview.className = "vence-preview"; return; }
+    // Parse dd/mm/yyyy
+    const parts = t.creado.split("/");
+    const created = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+    const expires = new Date(created);
+    expires.setDate(expires.getDate() + 30);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const daysLeft = Math.ceil((expires - today) / (1000*60*60*24));
+    const expStr = expires.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
+    const icon = document.getElementById("venceIcon");
+    const msg = document.getElementById("venceMsg");
+    if (daysLeft <= 0) {
+      preview.className = "vence-preview vence-exp show";
+      icon.textContent = "✗";
+      msg.textContent = "Esta tarjeta venció el " + expStr;
+    } else if (daysLeft <= 5) {
+      preview.className = "vence-preview vence-warn show";
+      icon.textContent = "⚠";
+      msg.textContent = "Vence el " + expStr + " — te quedan " + daysLeft + " día(s)";
+    } else {
+      preview.className = "vence-preview vence-ok show";
+      icon.textContent = "⏳";
+      msg.textContent = "Vence el " + expStr;
+    }
+  });
 </script>
 </body>
 </html>
