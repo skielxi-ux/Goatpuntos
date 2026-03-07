@@ -250,7 +250,7 @@
     <div class="panel">
       <div class="panel-header"><div class="panel-title">Historial de canjes</div><button class="btn btn-export" id="btnExportHistorial"><span>Exportar CSV</span></button></div>
       <div class="panel-body" style="padding-bottom:0;"><div class="search-row"><input class="search-input" id="searchHist" placeholder="Buscar por nombre, email o codigo..."><span class="result-count" id="histCount"></span></div></div>
-      <div class="table-wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Telefono</th><th>Email</th><th>Codigo</th><th>Tarjeta</th><th>Puntos</th></tr></thead><tbody id="histTableBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Telefono</th><th>Email</th><th>Codigo</th><th>Tarjeta</th><th>Puntos</th><th></th></tr></thead><tbody id="histTableBody"></tbody></table></div>
     </div>
   </div>
 
@@ -450,10 +450,10 @@
   async function getHist() {
     try {
       const snap = await getDocs(query(collection(db, "historial"), orderBy("timestamp","desc")));
-      const r = []; snap.forEach(d => r.push(d.data())); return r;
+      const r = []; snap.forEach(d => r.push({id:d.id, ...d.data()})); return r;
     } catch {
       const snap = await getDocs(collection(db, "historial"));
-      const r = []; snap.forEach(d => r.push(d.data())); return r;
+      const r = []; snap.forEach(d => r.push({id:d.id, ...d.data()})); return r;
     }
   }
   async function getBeneficios() {
@@ -581,18 +581,30 @@
   // HISTORIAL
   async function renderHistTable() {
     const tbody = document.getElementById("histTableBody");
-    tbody.innerHTML = "<tr class='empty-row'><td colspan='8'>Cargando...</td></tr>";
+    tbody.innerHTML = "<tr class='empty-row'><td colspan='9'>Cargando...</td></tr>";
     const hist = await getHist();
     const q = (document.getElementById("searchHist").value || "").toLowerCase();
     tbody.innerHTML = "";
     const entries = hist.filter(h => !q || (h.nombre||"").toLowerCase().includes(q) || (h.email||"").toLowerCase().includes(q) || (h.codigo||"").toLowerCase().includes(q));
     document.getElementById("histCount").textContent = entries.length + " registro(s)";
-    if (!entries.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='8'>No hay canjes registrados</td></tr>"; return; }
+    if (!entries.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='9'>No hay canjes registrados</td></tr>"; return; }
     entries.forEach((h,i) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + h.fecha + "</td><td>" + h.nombre + "</td><td style='color:var(--text-secondary);'>" + (h.telefono||"—") + "</td><td style='color:var(--text-secondary);'>" + h.email + "</td><td class='td-code'>" + h.codigo + "</td><td>" + h.emoji + " " + h.tarjeta + "</td><td class='td-pts'>+" + h.puntos + "</td>";
+      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"00") + "</td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + h.fecha + "</td><td>" + h.nombre + "</td><td style='color:var(--text-secondary);'>" + (h.telefono||"—") + "</td><td style='color:var(--text-secondary);'>" + h.email + "</td><td class='td-code'>" + h.codigo + "</td><td>" + h.emoji + " " + h.tarjeta + "</td><td class='td-pts'>+" + h.puntos + "</td><td><button class='btn btn-danger' id='delhist_" + h.id + "'><span>🗑</span></button></td>";
       tbody.appendChild(tr);
+      document.getElementById("delhist_" + h.id).addEventListener("click", () => confirmDeleteHist(h.id, h.codigo, h.nombre));
     });
+  }
+
+  function confirmDeleteHist(id, codigo, nombre) {
+    document.getElementById("modalMsg").innerHTML = "Eliminar canje <strong>" + codigo + "</strong> de <strong>" + nombre + "</strong>?";
+    document.getElementById("btnConfirmDel").onclick = async () => {
+      await deleteDoc(doc(db, "historial", id));
+      closeModal();
+      renderHistTable();
+      renderDashboard();
+    };
+    document.getElementById("modalOverlay").classList.add("show");
   }
 
   // BENEFICIOS
