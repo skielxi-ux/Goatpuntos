@@ -74,7 +74,7 @@
   .stat-card-label { font-size:0.62rem; font-weight:700; letter-spacing:0.18em; color:#fff; text-transform:uppercase; }
 
   /* FORM */
-  .form-row { display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto; gap:12px; align-items:end; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:12px; align-items:end; }
   .form-row-2 { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:end; }
   .form-group { display:flex; flex-direction:column; gap:8px; }
   .form-label { font-size:0.62rem; font-weight:700; letter-spacing:0.2em; color:#fff; text-transform:uppercase; }
@@ -187,6 +187,32 @@
   </div>
 </div>
 
+<!-- EDIT BENEFICIO MODAL -->
+<div class="modal-overlay" id="editBenModal">
+  <div class="modal" style="max-width:480px;text-align:left;">
+    <div class="modal-title" style="color:var(--accent-blue);">Editar beneficio</div>
+    <input type="hidden" id="editBenId">
+    <div class="form-group" style="margin-bottom:14px;">
+      <label class="form-label">Nombre</label>
+      <input class="form-input" id="editBenNombre" autocomplete="off">
+    </div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label class="form-label">Puntos requeridos</label>
+      <input class="form-input" id="editBenPts" type="number" min="1">
+    </div>
+    <div class="form-group" style="margin-bottom:20px;">
+      <label class="form-label">Descripción (opcional)</label>
+      <input class="form-input" id="editBenDesc" autocomplete="off">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-cancel" id="btnCancelEditBen"><span>Cancelar</span></button>
+      <button class="btn" id="btnSaveEditBen" style="border-color:var(--accent-blue);color:var(--accent-blue);"><span>Guardar cambios</span></button>
+    </div>
+    <div class="alert alert-success" id="editBenOk" style="margin-top:12px;"><span>✓</span><span id="editBenOkMsg"></span></div>
+    <div class="alert alert-error" id="editBenErr" style="margin-top:12px;"><span>✗</span><span id="editBenErrMsg"></span></div>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header id="mainHeader" style="display:none;">
   <div class="header-left">
@@ -229,7 +255,6 @@
       <div class="panel-body">
         <div class="form-row">
           <div class="form-group"><label class="form-label">Codigo</label><input class="form-input code-input" id="newCode" placeholder="Ej: GOATXXX123" maxlength="20" autocomplete="off"></div>
-          <div class="form-group"><label class="form-label">Tipo de carta</label><input class="form-input" id="newTipo" placeholder="Ej: Bronce, Oro, VIP" autocomplete="off"></div>
           <div class="form-group"><label class="form-label">Nombre de tarjeta</label><input class="form-input" id="newName" placeholder="Ej: Tarjeta Oro" autocomplete="off"></div>
           <div class="form-group"><label class="form-label">Puntos</label><input class="form-input" id="newPts" type="number" placeholder="Ej: 500" min="1"></div>
           <button class="btn btn-add" id="btnAddCode"><span>+ Agregar</span></button>
@@ -242,7 +267,7 @@
     <div class="panel">
       <div class="panel-header"><div class="panel-title">Codigos cargados</div><button class="btn btn-export" id="btnExportCodigos"><span>Exportar CSV</span></button></div>
       <div class="panel-body" style="padding-bottom:0;"><div class="search-row"><input class="search-input" id="searchCode" placeholder="Buscar codigo o nombre..."><span class="result-count" id="codeCount"></span></div></div>
-      <div class="table-wrap"><table><thead><tr><th>#</th><th>Codigo</th><th>Tipo</th><th>Nombre</th><th>Puntos</th><th>Estado</th><th>Creado</th><th>Vence</th><th></th></tr></thead><tbody id="codesTableBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>Codigo</th><th>Nombre</th><th>Puntos</th><th>Estado</th><th>Creado</th><th>Vence</th><th></th></tr></thead><tbody id="codesTableBody"></tbody></table></div>
     </div>
   </div>
 
@@ -298,7 +323,7 @@
     </div>
     <div class="panel">
       <div class="panel-header"><div class="panel-title">Historial de beneficios aplicados</div><button class="btn btn-export" id="btnExportBeneficios"><span>Exportar CSV</span></button></div>
-      <div class="table-wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Email</th><th>Beneficio</th><th>Pts descontados</th><th>Pts restantes</th></tr></thead><tbody id="benHistTableBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Email</th><th>Beneficio</th><th>Pts descontados</th><th>Pts restantes</th><th></th></tr></thead><tbody id="benHistTableBody"></tbody></table></div>
     </div>
   </div>
 
@@ -322,23 +347,6 @@
 
 </div>
 
-<script>
-  // Login handlers — fuera del módulo para que funcionen siempre
-  document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("btnLogin").addEventListener("click", function() {
-      window._doLogin && window._doLogin();
-    });
-    document.getElementById("toggleBtn").addEventListener("click", function() {
-      const inp = document.getElementById("loginPass");
-      const btn = document.getElementById("toggleBtn");
-      if (inp.type === "password") { inp.type = "text"; btn.style.color = "var(--accent-blue)"; }
-      else { inp.type = "password"; btn.style.color = "var(--text-muted)"; }
-    });
-    document.getElementById("loginPass").addEventListener("keydown", function(e) {
-      if (e.key === "Enter") window._doLogin && window._doLogin();
-    });
-  });
-</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -373,7 +381,6 @@
       document.getElementById("loginPass").value = "";
     }
   }
-  window._doLogin = doLogin;
 
   function logout() {
     document.getElementById("loginScreen").style.display = "flex";
@@ -492,7 +499,6 @@
   // ADD CODE
   async function addCode() {
     const raw = document.getElementById("newCode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
-    const tipo = document.getElementById("newTipo").value.trim();
     const name = document.getElementById("newName").value.trim();
     const pts = parseInt(document.getElementById("newPts").value);
     if (!raw) { showMsg("add","err","Ingresa un codigo."); return; }
@@ -505,9 +511,8 @@
     venceDate.setDate(venceDate.getDate() + 30);
     const vence = venceDate.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
     const venceISO = venceDate.toISOString();
-    await setDoc(doc(db,"codigos",raw), {nombre:name,tipo:tipo||"",puntos:pts,emoji:selectedEmoji,creado:now,usado:false,vence,venceISO});
+    await setDoc(doc(db,"codigos",raw), {nombre:name,puntos:pts,emoji:selectedEmoji,creado:now,usado:false,vence,venceISO});
     document.getElementById("newCode").value = "";
-    document.getElementById("newTipo").value = "";
     document.getElementById("newName").value = "";
     document.getElementById("newPts").value = "";
     showMsg("add","ok","Codigo " + raw + " agregado con " + pts + " pts.");
@@ -567,7 +572,7 @@
         }
       }
       const tr = document.createElement("tr");
-      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td class='td-code'>" + code + "</td><td style='color:var(--text-secondary);font-size:0.85rem;'>" + (t.tipo||"—") + "</td><td>" + t.emoji + " " + t.nombre + "</td><td class='td-pts'>+" + t.puntos + "</td><td><span class='td-used " + (t.usado?"yes":"no") + "'>" + (t.usado?"Canjeado":"Disponible") + "</span></td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + (t.creado||"—") + "</td><td style='" + venceStyle + "'>" + venceLabel + "</td><td><button class='btn btn-danger' id='del_" + code + "'><span>Eliminar</span></button></td>";
+      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td class='td-code'>" + code + "</td><td>" + t.emoji + " " + t.nombre + "</td><td class='td-pts'>+" + t.puntos + "</td><td><span class='td-used " + (t.usado?"yes":"no") + "'>" + (t.usado?"Canjeado":"Disponible") + "</span></td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + (t.creado||"—") + "</td><td style='" + venceStyle + "'>" + venceLabel + "</td><td><button class='btn btn-danger' id='del_" + code + "'><span>Eliminar</span></button></td>";
       tbody.appendChild(tr);
       document.getElementById("del_"+code).onclick = () => confirmDelete(code, t.nombre);
     });
@@ -642,11 +647,39 @@
     if (!entries.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='5'>No hay beneficios cargados</td></tr>"; return; }
     entries.forEach(([id,b],i) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td style='font-weight:700;'>🎁 " + b.nombre + "</td><td style='color:var(--text-secondary);font-size:0.85rem;'>" + (b.descripcion||"—") + "</td><td class='td-pts'>" + b.puntos + " pts</td><td><button class='btn btn-danger' id='delben_" + id + "'><span>Eliminar</span></button></td>";
+      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td style='font-weight:700;'>🎁 " + b.nombre + "</td><td style='color:var(--text-secondary);font-size:0.85rem;'>" + (b.descripcion||"—") + "</td><td class='td-pts'>" + b.puntos + " pts</td><td style='display:flex;gap:8px;'><button class='btn' id='editben_" + id + "' style='border-color:var(--accent-blue);color:var(--accent-blue);padding:6px 12px;font-size:0.58rem;'><span>Editar</span></button><button class='btn btn-danger' id='delben_" + id + "'><span>Eliminar</span></button></td>";
       tbody.appendChild(tr);
+      document.getElementById("editben_"+id).onclick = () => openEditBen(id, b);
       document.getElementById("delben_"+id).onclick = async () => { await deleteDoc(doc(db,"beneficios",id)); renderBenTable(); populateBenSelect(); };
     });
     await populateBenSelect();
+  }
+
+  function openEditBen(id, b) {
+    document.getElementById("editBenId").value = id;
+    document.getElementById("editBenNombre").value = b.nombre || "";
+    document.getElementById("editBenPts").value = b.puntos || "";
+    document.getElementById("editBenDesc").value = b.descripcion || "";
+    document.getElementById("editBenOk").classList.remove("show");
+    document.getElementById("editBenErr").classList.remove("show");
+    document.getElementById("editBenModal").classList.add("show");
+  }
+
+  async function saveEditBen() {
+    const id = document.getElementById("editBenId").value;
+    const nombre = document.getElementById("editBenNombre").value.trim();
+    const pts = parseInt(document.getElementById("editBenPts").value);
+    const desc = document.getElementById("editBenDesc").value.trim();
+    if (!nombre) { document.getElementById("editBenErrMsg").textContent = "Ingresa el nombre."; document.getElementById("editBenErr").classList.add("show"); return; }
+    if (!pts || pts < 1) { document.getElementById("editBenErrMsg").textContent = "Ingresa los puntos."; document.getElementById("editBenErr").classList.add("show"); return; }
+    await setDoc(doc(db,"beneficios",id), {nombre, puntos:pts, descripcion:desc}, {merge:true});
+    document.getElementById("editBenOkMsg").textContent = "Beneficio actualizado.";
+    document.getElementById("editBenOk").classList.add("show");
+    setTimeout(() => {
+      document.getElementById("editBenModal").classList.remove("show");
+      renderBenTable();
+      populateBenSelect();
+    }, 1200);
   }
 
   async function populateBenSelect() {
@@ -723,14 +756,24 @@
 
   async function renderBenHistTable() {
     const tbody = document.getElementById("benHistTableBody");
-    tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>Cargando...</td></tr>";
+    tbody.innerHTML = "<tr class='empty-row'><td colspan='8'>Cargando...</td></tr>";
     const hist = await getBenHist();
     tbody.innerHTML = "";
-    if (!hist.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>No hay beneficios aplicados aun</td></tr>"; return; }
+    if (!hist.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='8'>No hay beneficios aplicados aun</td></tr>"; return; }
     hist.forEach((h,i) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + h.fecha + "</td><td style='font-weight:700;'>" + h.nombre + "</td><td style='color:var(--text-secondary);'>" + h.email + "</td><td>🎁 " + h.beneficio + "</td><td style='color:var(--accent-red);font-family:Orbitron,monospace;'>-" + h.puntosDescontados + " pts</td><td class='td-pts'>" + h.puntosRestantes + " pts</td>";
+      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + h.fecha + "</td><td style='font-weight:700;'>" + h.nombre + "</td><td style='color:var(--text-secondary);'>" + h.email + "</td><td>🎁 " + h.beneficio + "</td><td style='color:var(--accent-red);font-family:Orbitron,monospace;'>-" + h.puntosDescontados + " pts</td><td class='td-pts'>" + h.puntosRestantes + " pts</td><td><button class='btn btn-danger' id='delbenhist_" + h.id + "'><span>🗑</span></button></td>";
       tbody.appendChild(tr);
+      document.getElementById("delbenhist_" + h.id).onclick = () => {
+        deleteTarget = h.id;
+        document.getElementById("modalMsg").innerHTML = "Eliminar el beneficio <strong>" + h.beneficio + "</strong> aplicado a <strong>" + h.nombre + "</strong>?";
+        document.getElementById("btnConfirmDel").onclick = async () => {
+          await deleteDoc(doc(db,"beneficios_historial", deleteTarget));
+          closeModal();
+          renderBenHistTable();
+        };
+        document.getElementById("modalOverlay").classList.add("show");
+      };
     });
   }
 
@@ -776,7 +819,10 @@
   async function init() { buildEmojiGrid(); await renderDashboard(); }
 
   // EVENT LISTENERS
+  document.getElementById("btnLogin").addEventListener("click", doLogin);
   document.getElementById("btnLogout").addEventListener("click", logout);
+  document.getElementById("toggleBtn").addEventListener("click", togglePass);
+  document.getElementById("loginPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
   document.getElementById("btnCancelModal").addEventListener("click", closeModal);
   document.getElementById("modalOverlay").addEventListener("click", e => { if (e.target === document.getElementById("modalOverlay")) closeModal(); });
   document.getElementById("tab-btn-dashboard").addEventListener("click", () => switchTab("dashboard"));
@@ -788,6 +834,9 @@
   document.getElementById("btnExportHistorial").addEventListener("click", () => exportCSV("historial"));
   document.getElementById("btnExportBeneficios").addEventListener("click", () => exportCSV("beneficios"));
   document.getElementById("btnAddBeneficio").addEventListener("click", addBeneficio);
+  document.getElementById("btnCancelEditBen").addEventListener("click", () => document.getElementById("editBenModal").classList.remove("show"));
+  document.getElementById("editBenModal").addEventListener("click", e => { if (e.target === document.getElementById("editBenModal")) document.getElementById("editBenModal").classList.remove("show"); });
+  document.getElementById("btnSaveEditBen").addEventListener("click", saveEditBen);
   document.getElementById("btnBuscarCliente").addEventListener("click", buscarCliente);
   document.getElementById("btnAplicarBeneficio").addEventListener("click", aplicarBeneficio);
   document.getElementById("searchCode").addEventListener("input", renderCodesTable);
