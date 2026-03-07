@@ -720,9 +720,18 @@
       return;
     }
 
+    // Filtrar beneficios ya canjeados por este usuario
+    const canjeadosNombres = new Set(state.beneficios.map(b => b.beneficio));
+    const disponibles = bens.filter(b => !canjeadosNombres.has(b.nombre));
+
+    if (!disponibles.length) {
+      list.innerHTML = "<div class='empty-msg'>Ya canjeaste todos los beneficios disponibles</div>";
+      return;
+    }
+
     // Sort: available first, then by points asc
     const pts = state.puntos;
-    bens.sort((a,b) => {
+    disponibles.sort((a,b) => {
       const aAvail = pts >= a.puntos;
       const bAvail = pts >= b.puntos;
       if (aAvail && !bAvail) return -1;
@@ -730,7 +739,7 @@
       return a.puntos - b.puntos;
     });
 
-    list.innerHTML = bens.map(b => {
+    list.innerHTML = disponibles.map(b => {
       const available = pts >= b.puntos;
       const missing = b.puntos - pts;
       return "<div class='ben-card " + (available ? "available" : "locked") + "'>" +
