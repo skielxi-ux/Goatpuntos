@@ -300,6 +300,24 @@
     </div>
   </div>
 
+    <!-- ALERTAS -->
+  <div class="tab-content" id="tab-alertas">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⚠️ Códigos vencidos — disponibles para reutilizar</div>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:20px;">Estos códigos no fueron canjeados en 30 días. Podés eliminarlos y volver a cargarlos para que otro jugador los use.</p>
+        <div id="alertasTableWrap">
+          <table class="table">
+            <thead><tr><th>#</th><th>Codigo</th><th>Nombre</th><th>Puntos</th><th>Creado</th><th>Venció hace</th><th></th></tr></thead>
+            <tbody id="alertasTableBody"><tr class="empty-row"><td colspan="7">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script type="module">
@@ -363,6 +381,51 @@
     if (name === "codigos") renderCodesTable();
     if (name === "historial") renderHistTable();
     if (name === "beneficios") { renderBenTable(); renderBenHistTable(); }
+    if (name === "alertas") renderAlertasTable();
+  }
+
+  // ALERTAS
+  async function renderAlertasTable() {
+    const tbody = document.getElementById("alertasTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>Cargando...</td></tr>";
+    const codes = await getCodes();
+    const now = new Date();
+    const vencidos = [];
+    Object.entries(codes).forEach(([code, t]) => {
+      if (!t.usado && t.creado) {
+        const parts = t.creado.split("/");
+        if (parts.length === 3) {
+          const creadoDate = new Date(parts[2], parts[1]-1, parts[0]);
+          const venceDate = new Date(creadoDate);
+          venceDate.setDate(venceDate.getDate() + 30);
+          const diasVencido = Math.floor((now - venceDate) / (1000*60*60*24));
+          if (diasVencido > 0) vencidos.push({code, t, diasVencido});
+        }
+      }
+    });
+
+    // Update badge
+    const badge = document.getElementById("alertaBadge");
+    if (badge) {
+      if (vencidos.length > 0) { badge.textContent = vencidos.length; badge.style.display = "inline"; }
+      else { badge.style.display = "none"; }
+    }
+
+    if (!vencidos.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>No hay códigos vencidos</td></tr>"; return; }
+    tbody.innerHTML = "";
+    vencidos.forEach(({code, t, diasVencido}, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"00") + "</td>" +
+        "<td class='td-code'>" + code + "</td>" +
+        "<td>" + t.emoji + " " + t.nombre + "</td>" +
+        "<td class='td-pts'>+" + t.puntos + "</td>" +
+        "<td style='color:var(--text-secondary);font-size:0.82rem;'>" + (t.creado||"—") + "</td>" +
+        "<td style='color:var(--accent-red);font-weight:700;font-size:0.82rem;'>Hace " + diasVencido + " día" + (diasVencido !== 1 ? "s" : "") + "</td>" +
+        "<td><button class='btn btn-danger' id='alerta_del_" + code + "'><span>Eliminar</span></button></td>";
+      tbody.appendChild(tr);
+      document.getElementById("alerta_del_" + code).onclick = () => confirmDelete(code, t.nombre);
+    });
   }
 
   // EMOJI
@@ -426,7 +489,7 @@
     document.getElementById("newName").value = "";
     document.getElementById("newPts").value = "";
     showMsg("add","ok","Codigo " + raw + " agregado con " + pts + " pts.");
-    renderCodesTable(); renderDashboard();
+    renderCodesTable(); renderDashboard(); renderAlertasTable();
   }
 
   // RENDER CODES
