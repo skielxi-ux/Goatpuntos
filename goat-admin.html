@@ -492,40 +492,33 @@
   }
 
   window._verInscriptos = async (tnId, juego) => {
+    // Build a dedicated inscriptos panel inside the modal
     const snap = await getDocs(collection(db, "inscripciones"));
-    const insc = [];
-    snap.forEach(d => { if(d.data().torneoId === tnId) insc.push(d.data()); });
-    let html = "<div style='font-family:Rajdhani,sans-serif;'><div style='font-size:1rem;font-weight:700;margin-bottom:14px;color:#fff;'>Inscriptos — " + juego + "</div>";
-    if (!insc.length) { html += "<div style='color:var(--text-muted);font-size:0.85rem;'>No hay inscriptos aún.</div>"; }
-    insc.forEach((ins, i) => {
-      html += "<div style='background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:10px 14px;margin-bottom:8px;font-size:0.82rem;'>";
-      html += "<div style='font-weight:700;color:var(--accent-green);margin-bottom:4px;'>" + (i+1) + ". " + ins.nombre + " " + ins.apellido + (ins.fantasia ? " — <span style=\'color:var(--accent-yellow);\'>" + ins.fantasia + "</span>" : "") + "</div>";
-      html += "<div style='color:var(--text-secondary);'>📞 " + ins.telefono + " &nbsp;|&nbsp; ✉️ " + ins.email + "</div>";
-      if (ins.jugador2Nombre) html += "<div style='color:var(--text-muted);margin-top:4px;'>J2: " + ins.jugador2Nombre + " " + ins.jugador2Apellido + " — " + ins.jugador2Email + "</div>";
-      html += "</div>";
-    });
-    html += "</div>";
-    document.getElementById("modalMsg").innerHTML = html;
-    document.getElementById("btnConfirmDel").style.display = "none";
-    document.getElementById("modalOverlay").classList.add("show");
-    document.getElementById("modalOverlay").onclick = (e) => { if(e.target === document.getElementById("modalOverlay")) { closeModal(); document.getElementById("btnConfirmDel").style.display=""; } };
-  };
+    const docs = [];
+    snap.forEach(d => { if(d.data().torneoId === tnId) docs.push({id: d.id, ...d.data()}); });
 
-  window._verInscriptos = async (tnId, juego) => {
-    const snap = await getDocs(collection(db, "inscripciones"));
-    const insc = [];
-    snap.forEach(d => { if(d.data().torneoId === tnId) insc.push(d.data()); });
-    let html = "<div style='font-family:Rajdhani,sans-serif;'><div style='font-size:1rem;font-weight:700;margin-bottom:14px;color:#fff;'>Inscriptos — " + juego + "</div>";
-    if (!insc.length) { html += "<div style='color:var(--text-muted);font-size:0.85rem;'>No hay inscriptos aún.</div>"; }
-    insc.forEach((ins, i) => {
-      html += "<div style='background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:10px 14px;margin-bottom:8px;font-size:0.82rem;'>";
-      html += "<div style='font-weight:700;color:var(--accent-green);margin-bottom:4px;'>" + (i+1) + ". " + ins.nombre + " " + ins.apellido + (ins.fantasia ? " — <span style=color:var(--accent-yellow)>" + ins.fantasia + "</span>" : "") + "</div>";
-      html += "<div style='color:var(--text-secondary);'>📞 " + ins.telefono + " &nbsp;|&nbsp; ✉️ " + ins.email + "</div>";
-      if (ins.jugador2Nombre) html += "<div style='color:var(--text-muted);margin-top:4px;'>J2: " + ins.jugador2Nombre + " " + ins.jugador2Apellido + " — " + ins.jugador2Email + "</div>";
+    const renderInscList = () => {
+      let html = "<div style='font-family:Rajdhani,sans-serif;max-height:60vh;overflow-y:auto;'>";
+      html += "<div style='font-family:Orbitron,monospace;font-size:0.8rem;font-weight:700;color:var(--accent-green);margin-bottom:14px;letter-spacing:0.1em;'>🏆 " + juego + " — " + docs.length + " inscripto(s)</div>";
+      if (!docs.length) {
+        html += "<div style='color:var(--text-muted);font-size:0.85rem;padding:20px 0;text-align:center;'>No hay inscriptos aún.</div>";
+      }
+      docs.forEach((ins, i) => {
+        html += "<div style='background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:10px;'>";
+        html += "<div style='display:flex;justify-content:space-between;align-items:flex-start;'>";
+        html += "<div style='flex:1;'>";
+        html += "<div style='font-weight:700;font-size:0.88rem;color:#fff;margin-bottom:4px;'>" + (i+1) + ". " + ins.nombre + " " + ins.apellido + (ins.fantasia ? " <span style=color:var(--accent-yellow);font-size:0.78rem;>— " + ins.fantasia + "</span>" : "") + "</div>";
+        html += "<div style='font-size:0.78rem;color:var(--text-secondary);margin-bottom:2px;'>📞 " + ins.telefono + " &nbsp;·&nbsp; ✉️ " + ins.email + "</div>";
+        if (ins.jugador2Nombre) html += "<div style='font-size:0.75rem;color:var(--text-muted);margin-top:4px;border-top:1px solid var(--border);padding-top:4px;'>J2: " + ins.jugador2Nombre + " " + ins.jugador2Apellido + " · " + ins.jugador2Email + "</div>";
+        html += "</div>";
+        html += "<button onclick="window._delInscripto('" + ins.id + "','" + tnId + "','" + juego + "')" style='margin-left:10px;padding:4px 10px;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.4);color:var(--accent-red);border-radius:3px;cursor:pointer;font-size:0.72rem;font-weight:700;flex-shrink:0;'>🗑 Eliminar</button>";
+        html += "</div></div>";
+      });
       html += "</div>";
-    });
-    html += "</div>";
-    document.getElementById("modalMsg").innerHTML = html;
+      document.getElementById("modalMsg").innerHTML = html;
+    };
+
+    renderInscList();
     document.getElementById("btnConfirmDel").style.display = "none";
     document.getElementById("modalOverlay").classList.add("show");
     document.getElementById("modalOverlay").addEventListener("click", function handler(e) {
@@ -535,6 +528,21 @@
         document.getElementById("modalOverlay").removeEventListener("click", handler);
       }
     });
+
+    window._delInscripto = async (inscId, tnId2, juego2) => {
+      if (!confirm("¿Eliminar este inscripto?")) return;
+      await deleteDoc(doc(db, "inscripciones", inscId));
+      // Update count
+      const tnRef = doc(db, "torneos", tnId2);
+      const tnSnap = await getDoc(tnRef);
+      const actual = tnSnap.data().inscriptos || 0;
+      await setDoc(tnRef, {inscriptos: Math.max(0, actual - 1)}, {merge:true});
+      // Remove from local array and re-render
+      const idx = docs.findIndex(d => d.id === inscId);
+      if (idx !== -1) docs.splice(idx, 1);
+      renderInscList();
+      renderTorneos();
+    };
   };
 
   window._changeTnEstado = async (id, estado) => {
