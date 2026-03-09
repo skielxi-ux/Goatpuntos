@@ -796,7 +796,7 @@
     const lista = [];
     snap.forEach(d => {
       const data = d.data();
-      if (data.email === state.email) lista.push({id: d.id, ...data});
+      if (data.email && currentUser && data.email.toLowerCase() === currentUser.email.toLowerCase()) lista.push({id: d.id, ...data});
     });
     if (!lista.length) {
       el.innerHTML = "<div style='text-align:center;padding:32px;color:var(--text-muted);font-size:0.82rem;text-transform:uppercase;'>No estás inscripto en ningún torneo</div>";
