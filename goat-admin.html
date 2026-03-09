@@ -456,37 +456,66 @@
       list.innerHTML = "<div style='text-align:center;padding:32px;color:var(--text-muted);font-size:0.82rem;text-transform:uppercase;'>No hay torneos en esta categoría</div>";
       return;
     }
-    // Sort by fecha
     filtered.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
     list.innerHTML = "";
     filtered.forEach(t => {
       const fechaStr = t.fecha ? new Date(t.fecha + "T00:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}) : "—";
       const card = document.createElement("div");
       card.style.cssText = "background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:16px 20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;";
-      card.innerHTML = `
-        <div style="flex:1;">
-          <div style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:8px;">🎮 ${t.juego}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-            ${t.modalidad ? `<span style="background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.3);color:var(--accent-blue);padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;">${t.modalidad}</span>` : ""}
-            ${t.consola ? `<span style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:var(--accent-green);padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;">${t.consola}</span>` : ""}
-            <span style="background:rgba(255,208,96,0.1);border:1px solid rgba(255,208,96,0.3);color:var(--accent-yellow);padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;">${t.formato}</span>
-          </div>
-          <div style="display:flex;gap:20px;font-size:0.8rem;color:var(--text-secondary);">
-            <span>📅 ${fechaStr}</span>
-            <span>👥 ${t.inscriptos||0}/${t.cupos} inscriptos</span>
-            ${t.premio ? `<span>🏆 ${t.premio}</span>` : ""}
-            ${t.costo ? `<span>💰 $${t.costo}</span>` : "<span>💰 Gratis</span>"}
-          </div>
-          <div style="margin-top:8px;"><button class="btn" style="font-size:0.68rem;padding:4px 12px;border:1px solid var(--accent-blue);color:var(--accent-blue);background:transparent;border-radius:3px;cursor:pointer;" onclick="window._verInscriptos('${t.id}', '${t.juego}')">Ver inscriptos (${t.inscriptos||0})</button></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;min-width:120px;align-items:flex-end;">
-          <select class="form-input" style="font-size:0.72rem;padding:4px 8px;cursor:pointer;" onchange="window._changeTnEstado('${t.id}', this.value)">
-            <option value="proximo" ${t.estado==="proximo"?"selected":""}>🔵 Próximo</option>
-            <option value="activo" ${t.estado==="activo"?"selected":""}>🟢 Activo</option>
-            <option value="finalizado" ${t.estado==="finalizado"?"selected":""}>⚫ Finalizado</option>
-          </select>
-          <button class="btn btn-danger" style="width:100%;padding:6px;" onclick="window._deleteTorneo('${t.id}')"><span>🗑 Eliminar</span></button>
-        </div>`;
+
+      // Left info
+      const left = document.createElement("div");
+      left.style.flex = "1";
+
+      const title = document.createElement("div");
+      title.style.cssText = "font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:8px;";
+      title.textContent = "🎮 " + t.juego;
+      left.appendChild(title);
+
+      const tags = document.createElement("div");
+      tags.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;";
+      if (t.modalidad) { const s = document.createElement("span"); s.style.cssText = "background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.3);color:var(--accent-blue);padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;"; s.textContent = t.modalidad; tags.appendChild(s); }
+      if (t.consola) { const s = document.createElement("span"); s.style.cssText = "background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:var(--accent-green);padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;"; s.textContent = t.consola; tags.appendChild(s); }
+      const fmt = document.createElement("span"); fmt.style.cssText = "background:rgba(255,208,96,0.1);border:1px solid rgba(255,208,96,0.3);color:var(--accent-yellow);padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;"; fmt.textContent = t.formato; tags.appendChild(fmt);
+      left.appendChild(tags);
+
+      const info = document.createElement("div");
+      info.style.cssText = "display:flex;gap:20px;font-size:0.8rem;color:var(--text-secondary);flex-wrap:wrap;";
+      info.innerHTML = "<span>📅 " + fechaStr + "</span><span>👥 " + (t.inscriptos||0) + "/" + t.cupos + " inscriptos</span>" + (t.premio ? "<span>🏆 " + t.premio + "</span>" : "") + "<span>💰 " + (t.costo ? "$" + t.costo : "Gratis") + "</span>";
+      left.appendChild(info);
+
+      const verBtn = document.createElement("button");
+      verBtn.className = "btn";
+      verBtn.style.cssText = "font-size:0.68rem;padding:4px 12px;border:1px solid var(--accent-blue);color:var(--accent-blue);background:transparent;border-radius:3px;cursor:pointer;margin-top:8px;";
+      verBtn.textContent = "Ver inscriptos (" + (t.inscriptos||0) + ")";
+      verBtn.addEventListener("click", () => window._verInscriptos(t.id, t.juego));
+      left.appendChild(verBtn);
+
+      // Right controls
+      const right = document.createElement("div");
+      right.style.cssText = "display:flex;flex-direction:column;gap:6px;min-width:120px;align-items:flex-end;";
+
+      const sel = document.createElement("select");
+      sel.className = "form-input";
+      sel.style.cssText = "font-size:0.72rem;padding:4px 8px;cursor:pointer;";
+      [["proximo","🔵 Próximo"],["activo","🟢 Activo"],["finalizado","⚫ Finalizado"]].forEach(([val, label]) => {
+        const opt = document.createElement("option");
+        opt.value = val; opt.textContent = label;
+        if (t.estado === val) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener("change", () => window._changeTnEstado(t.id, sel.value));
+      right.appendChild(sel);
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn btn-danger";
+      delBtn.style.cssText = "width:100%;padding:6px;";
+      delBtn.innerHTML = "<span>🗑 Eliminar</span>";
+      delBtn.addEventListener("click", () => window._deleteTorneo(t.id));
+      right.appendChild(delBtn);
+
+      card.appendChild(left);
+      card.appendChild(right);
       list.appendChild(card);
     });
   }
