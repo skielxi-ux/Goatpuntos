@@ -540,7 +540,11 @@
     listEl.innerHTML = "<div style='text-align:center;padding:24px;color:var(--text-muted);'>Cargando...</div>";
     const snap = await getDocs(collection(db, "inscripciones"));
     const docs = [];
-    snap.forEach(d => { if(d.data().torneoId === tnId) docs.push({id: d.id, ...d.data()}); });
+    snap.forEach(d => { 
+      const data = d.data();
+      // Compare as strings to avoid type mismatch
+      if(String(data.torneoId) === String(tnId)) docs.push({id: d.id, ...data}); 
+    });
     const renderInscPanel = () => {
       titleEl.textContent = "🎮 " + juego + " — " + docs.length + " inscripto(s)";
       listEl.innerHTML = "";
