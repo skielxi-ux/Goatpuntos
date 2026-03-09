@@ -514,8 +514,8 @@
 
     <!-- EQUIPO (solo si formato=Equipo) -->
     <div id="inscEquipoBlock" style="display:none;">
-      <div style="margin-bottom:10px;"><label class="form-label">Nombre de fantasía del equipo</label><input class="form-input" id="inscFantasia" placeholder="Ej: Los Imparables" autocomplete="off"></div>
-      <div style="margin-bottom:10px;"><label class="form-label">Logo del equipo (opcional)</label><input class="form-input" id="inscLogo" type="file" accept="image/*" style="padding:8px;cursor:pointer;"></div>
+      <div style="margin-bottom:10px;"><label class="form-label">Nombre de fantasía del equipo *</label><input class="form-input" id="inscFantasia" placeholder="Ej: Los Imparables" autocomplete="off"></div>
+      <div style="margin-bottom:10px;"><label class="form-label">Logo del equipo</label><input class="form-input" id="inscLogo" type="file" accept="image/*" style="padding:8px;cursor:pointer;"></div>
 
       <!-- JUGADOR 2 -->
       <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin:16px 0 12px;">Datos del jugador 2</div>
@@ -556,8 +556,8 @@
       <div><label class="form-label">Email *</label><input class="form-input" id="inscEmail" type="email" placeholder="email@ejemplo.com" autocomplete="off"></div>
     </div>
     <div id="inscEquipoBlock" style="display:none;">
-      <div style="margin-bottom:10px;"><label class="form-label">Nombre de fantasía del equipo</label><input class="form-input" id="inscFantasia" placeholder="Ej: Los Imparables" autocomplete="off"></div>
-      <div style="margin-bottom:10px;"><label class="form-label">Logo del equipo (opcional)</label><input class="form-input" id="inscLogo" type="file" accept="image/*" style="padding:8px;cursor:pointer;"></div>
+      <div style="margin-bottom:10px;"><label class="form-label">Nombre de fantasía del equipo *</label><input class="form-input" id="inscFantasia" placeholder="Ej: Los Imparables" autocomplete="off"></div>
+      <div style="margin-bottom:10px;"><label class="form-label">Logo del equipo</label><input class="form-input" id="inscLogo" type="file" accept="image/*" style="padding:8px;cursor:pointer;"></div>
       <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin:16px 0 12px;">Datos del jugador 2</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div><label class="form-label">Nombre *</label><input class="form-input" id="inscJ2Nombre" placeholder="Nombre" autocomplete="off"></div>
@@ -874,7 +874,7 @@
     document.getElementById("inscModalTitle").textContent = "Inscripción — " + tn.juego;
     document.getElementById("inscModalSubtitle").textContent = tn.modalidad + " · " + tn.consola + " · " + (tn.costo ? "$" + tn.costo : "Gratis");
     document.getElementById("inscJ1Label").textContent = tn.formato === "Equipo" ? "Datos del jugador 1" : "Datos del jugador";
-    document.getElementById("inscEquipoBlock").style.display = tn.formato === "Equipo" ? "block" : "none";
+    document.getElementById("inscEquipoBlock").style.display = "block";
     // Clear fields
     ["inscNombre","inscApellido","inscTelefono","inscEmail","inscFantasia","inscJ2Nombre","inscApellido2","inscJ2Telefono","inscJ2Email"].forEach(id => {
       const el = document.getElementById(id); if(el) el.value = "";
@@ -895,7 +895,8 @@
     const telefono = document.getElementById("inscTelefono").value.trim();
     const email = document.getElementById("inscEmail").value.trim();
     const errEl = document.getElementById("inscErr");
-    if (!nombre || !apellido || !telefono || !email) {
+    const fantasia = document.getElementById("inscFantasia").value.trim();
+    if (!nombre || !apellido || !telefono || !email || !fantasia) {
       errEl.textContent = "Completá todos los campos obligatorios."; errEl.style.display = "block"; return;
     }
     if (inscTorneoActual.formato === "Equipo") {
