@@ -331,7 +331,7 @@
           <div class="form-group"><label class="form-label">Fecha</label><input class="form-input" id="tnFecha" type="date"></div>
           <div class="form-group"><label class="form-label">Cupos</label><input class="form-input" id="tnCupos" type="number" placeholder="Ej: 16" min="1"></div>
           <div class="form-group"><label class="form-label">Premio / Recompensa</label><input class="form-input" id="tnPremio" placeholder="Ej: 500 puntos + medalla" autocomplete="off"></div>
-          <div class="form-group"><label class="form-label">Costo inscripción ($)</label><input class="form-input" id="tnCosto" type="number" placeholder="Ej: 500" min="0"></div>
+          <div class="form-group"><label class="form-label">Costo inscripción ($)</label><input class="form-input" id="tnCosto" type="text" placeholder="Ej: 40000" autocomplete="off"></div>
           <button class="btn btn-add" id="btnAddTorneo"><span>+ Crear</span></button>
         </div>
         <div class="alert alert-success" id="tnOk"><span>✓</span><span id="tnOkMsg"></span></div>
@@ -438,7 +438,7 @@
     const fecha = document.getElementById("tnFecha").value;
     const cupos = parseInt(document.getElementById("tnCupos").value);
     const premio = document.getElementById("tnPremio").value.trim();
-    const costo = parseFloat(document.getElementById("tnCosto").value) || 0;
+    const costo = document.getElementById("tnCosto").value.trim().replace(/[^0-9]/g,"") || "0";
     if (!juego) { showMsg("tn","err","Ingresá el juego."); return; }
     if (!fecha) { showMsg("tn","err","Ingresá la fecha."); return; }
     if (!cupos || cupos < 1) { showMsg("tn","err","Ingresá los cupos."); return; }
