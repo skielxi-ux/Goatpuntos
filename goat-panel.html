@@ -495,7 +495,115 @@
 
     </div><!-- end main-content -->
   </div><!-- end app-body -->
+<!-- INSCRIPCION MODAL -->
+<div id="inscModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;overflow-y:auto;padding:20px;box-sizing:border-box;">
+  <div style="max-width:520px;margin:40px auto;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:28px;">
+    <div style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:var(--accent-green);margin-bottom:6px;" id="inscModalTitle">Inscripción al torneo</div>
+    <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:20px;" id="inscModalSubtitle"></div>
+
+    <!-- JUGADOR 1 -->
+    <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;" id="inscJ1Label">Datos del jugador</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div><label class="form-label">Nombre *</label><input class="form-input" id="inscNombre" placeholder="Nombre" autocomplete="off"></div>
+      <div><label class="form-label">Apellido *</label><input class="form-input" id="inscApellido" placeholder="Apellido" autocomplete="off"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div><label class="form-label">Teléfono *</label><input class="form-input" id="inscTelefono" placeholder="Ej: 3816000000" autocomplete="off"></div>
+      <div><label class="form-label">Email *</label><input class="form-input" id="inscEmail" type="email" placeholder="email@ejemplo.com" autocomplete="off"></div>
+    </div>
+
+    <!-- EQUIPO (solo si formato=Equipo) -->
+    <div id="inscEquipoBlock" style="display:none;">
+      <div style="margin-bottom:10px;"><label class="form-label">Nombre de fantasía del equipo</label><input class="form-input" id="inscFantasia" placeholder="Ej: Los Imparables" autocomplete="off"></div>
+      <div style="margin-bottom:10px;"><label class="form-label">Logo del equipo (opcional)</label><input class="form-input" id="inscLogo" type="file" accept="image/*" style="padding:8px;cursor:pointer;"></div>
+
+      <!-- JUGADOR 2 -->
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin:16px 0 12px;">Datos del jugador 2</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div><label class="form-label">Nombre *</label><input class="form-input" id="inscJ2Nombre" placeholder="Nombre" autocomplete="off"></div>
+        <div><label class="form-label">Apellido *</label><input class="form-input" id="inscJ2Apellido" placeholder="Apellido" autocomplete="off"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div><label class="form-label">Teléfono *</label><input class="form-input" id="inscJ2Telefono" placeholder="Ej: 3816000000" autocomplete="off"></div>
+        <div><label class="form-label">Email *</label><input class="form-input" id="inscJ2Email" type="email" placeholder="email@ejemplo.com" autocomplete="off"></div>
+      </div>
+    </div>
+
+    <div id="inscErr" style="display:none;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.3);color:var(--accent-red);padding:10px 14px;border-radius:3px;font-size:0.82rem;margin-bottom:12px;"></div>
+
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button style="flex:1;padding:12px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;border-radius:3px;cursor:pointer;" id="inscBtnCancel">Cancelar</button>
+      <button style="flex:2;padding:12px;background:transparent;border:1px solid var(--accent-green);color:var(--accent-green);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;border-radius:3px;cursor:pointer;" id="inscBtnContinuar">Continuar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGO MODAL -->
+<div id="pagoModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1001;display:none;align-items:center;justify-content:center;">
+  <div style="max-width:420px;width:90%;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:28px;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:12px;">💳</div>
+    <div style="font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;color:#fff;margin-bottom:6px;">Pago de inscripción</div>
+    <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:4px;" id="pagoTorneoNombre"></div>
+    <div style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:700;color:var(--accent-green);margin:16px 0;" id="pagoMonto"></div>
+    <button id="btnPagarMP" style="width:100%;padding:14px;background:#00b1ea;border:none;border-radius:6px;color:#fff;font-family:'Orbitron',monospace;font-size:0.75rem;font-weight:700;letter-spacing:0.15em;cursor:pointer;margin-bottom:10px;">
+      Pagar con Mercado Pago
+    </button>
+    <button id="btnPagoCancelar" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Orbitron',monospace;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;border-radius:3px;cursor:pointer;">
+      Cancelar
+    </button>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-top:12px;">Serás redirigido a Mercado Pago para completar el pago de forma segura.</div>
+  </div>
+</div>
+
 </div><!-- end appLayout -->
+
+<!-- INSCRIPCION MODAL -->
+<div id="inscModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1000;overflow-y:auto;padding:20px;box-sizing:border-box;">
+  <div style="max-width:520px;margin:40px auto;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:28px;">
+    <div style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:var(--accent-green);margin-bottom:6px;" id="inscModalTitle">Inscripción al torneo</div>
+    <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:20px;" id="inscModalSubtitle"></div>
+    <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;" id="inscJ1Label">Datos del jugador</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div><label class="form-label">Nombre *</label><input class="form-input" id="inscNombre" placeholder="Nombre" autocomplete="off"></div>
+      <div><label class="form-label">Apellido *</label><input class="form-input" id="inscApellido" placeholder="Apellido" autocomplete="off"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div><label class="form-label">Teléfono *</label><input class="form-input" id="inscTelefono" placeholder="Ej: 3816000000" autocomplete="off"></div>
+      <div><label class="form-label">Email *</label><input class="form-input" id="inscEmail" type="email" placeholder="email@ejemplo.com" autocomplete="off"></div>
+    </div>
+    <div id="inscEquipoBlock" style="display:none;">
+      <div style="margin-bottom:10px;"><label class="form-label">Nombre de fantasía del equipo</label><input class="form-input" id="inscFantasia" placeholder="Ej: Los Imparables" autocomplete="off"></div>
+      <div style="margin-bottom:10px;"><label class="form-label">Logo del equipo (opcional)</label><input class="form-input" id="inscLogo" type="file" accept="image/*" style="padding:8px;cursor:pointer;"></div>
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin:16px 0 12px;">Datos del jugador 2</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div><label class="form-label">Nombre *</label><input class="form-input" id="inscJ2Nombre" placeholder="Nombre" autocomplete="off"></div>
+        <div><label class="form-label">Apellido *</label><input class="form-input" id="inscApellido2" placeholder="Apellido" autocomplete="off"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div><label class="form-label">Teléfono *</label><input class="form-input" id="inscJ2Telefono" placeholder="Ej: 3816000000" autocomplete="off"></div>
+        <div><label class="form-label">Email *</label><input class="form-input" id="inscJ2Email" type="email" placeholder="email@ejemplo.com" autocomplete="off"></div>
+      </div>
+    </div>
+    <div id="inscErr" style="display:none;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.3);color:var(--accent-red);padding:10px 14px;border-radius:3px;font-size:0.82rem;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button style="flex:1;padding:12px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;border-radius:3px;cursor:pointer;" id="inscBtnCancel">Cancelar</button>
+      <button style="flex:2;padding:12px;background:transparent;border:1px solid var(--accent-green);color:var(--accent-green);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;border-radius:3px;cursor:pointer;" id="inscBtnContinuar">Continuar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGO MODAL -->
+<div id="pagoModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1001;align-items:center;justify-content:center;">
+  <div style="max-width:400px;width:90%;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:32px;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:12px;">💳</div>
+    <div style="font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;color:#fff;margin-bottom:6px;">Pago de inscripción</div>
+    <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:4px;" id="pagoTorneoNombre"></div>
+    <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:700;color:var(--accent-green);margin:16px 0;" id="pagoMonto"></div>
+    <button id="btnPagarMP" style="width:100%;padding:14px;background:#009ee3;border:none;border-radius:6px;color:#fff;font-family:'Orbitron',monospace;font-size:0.75rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;margin-bottom:10px;">🔵 Pagar con Mercado Pago</button>
+    <button id="btnPagoCancelar" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Orbitron',monospace;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;border-radius:3px;cursor:pointer;">Cancelar</button>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-top:12px;">Serás redirigido a Mercado Pago para completar el pago de forma segura.</div>
+  </div>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -714,6 +822,8 @@
   // ── TORNEOS ──────────────────────────────────────────
   let tnClientFilter = "activo";
 
+  let inscTorneoActual = null;
+
   async function renderTorneosClient() {
     const list = document.getElementById("tnClientList");
     list.innerHTML = "<div style='text-align:center;padding:24px;color:var(--text-muted);font-size:0.82rem;'>Cargando...</div>";
@@ -731,6 +841,9 @@
       const fechaStr = t.fecha ? new Date(t.fecha + "T00:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}) : "—";
       const estadoColor = t.estado === "activo" ? "var(--accent-green)" : t.estado === "proximo" ? "var(--accent-blue)" : "var(--text-muted)";
       const estadoLabel = t.estado === "activo" ? "🟢 Activo" : t.estado === "proximo" ? "🔵 Próximo" : "⚫ Finalizado";
+      const inscriptos = t.inscriptos || 0;
+      const cuposLleno = inscriptos >= t.cupos;
+      const puedeInscribirse = t.estado !== "finalizado";
       const card = document.createElement("div");
       card.style.cssText = "background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px;";
       card.innerHTML = `
@@ -743,14 +856,125 @@
           ${t.consola ? `<span style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:var(--accent-green);padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;">${t.consola}</span>` : ""}
           <span style="background:rgba(255,208,96,0.1);border:1px solid rgba(255,208,96,0.3);color:var(--accent-yellow);padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;">${t.formato}</span>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:0.78rem;color:var(--text-secondary);">
+        <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:0.78rem;color:var(--text-secondary);margin-bottom:14px;">
           <span>📅 ${fechaStr}</span>
-          <span>👥 ${t.cupos} cupos</span>
+          <span>👥 ${inscriptos}/${t.cupos} inscriptos</span>
           ${t.premio ? `<span>🏆 ${t.premio}</span>` : ""}
-        </div>`;
+          ${t.costo ? `<span>💰 $${t.costo}</span>` : "<span>💰 Gratis</span>"}
+        </div>
+        ${puedeInscribirse ? (cuposLleno
+          ? `<button disabled style="width:100%;padding:10px;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.3);color:var(--accent-red);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;border-radius:3px;cursor:not-allowed;">⛔ Cupo lleno</button>`
+          : `<button class="btn-inscribirse" data-id="${t.id}" style="width:100%;padding:10px;background:transparent;border:1px solid var(--accent-green);color:var(--accent-green);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;border-radius:3px;cursor:pointer;">⚡ Inscribirme</button>`
+        ) : ""}`;
       list.appendChild(card);
     });
+
+    document.querySelectorAll(".btn-inscribirse").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const tnId = btn.dataset.id;
+        const tn = filtered.find(t => t.id === tnId);
+        abrirInscripcion(tn);
+      });
+    });
   }
+
+  function abrirInscripcion(tn) {
+    inscTorneoActual = tn;
+    document.getElementById("inscModalTitle").textContent = "Inscripción — " + tn.juego;
+    document.getElementById("inscModalSubtitle").textContent = tn.modalidad + " · " + tn.consola + " · " + (tn.costo ? "$" + tn.costo : "Gratis");
+    document.getElementById("inscJ1Label").textContent = tn.formato === "Equipo" ? "Datos del jugador 1" : "Datos del jugador";
+    document.getElementById("inscEquipoBlock").style.display = tn.formato === "Equipo" ? "block" : "none";
+    // Clear fields
+    ["inscNombre","inscApellido","inscTelefono","inscEmail","inscFantasia","inscJ2Nombre","inscApellido2","inscJ2Telefono","inscJ2Email"].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = "";
+    });
+    document.getElementById("inscLogo").value = "";
+    document.getElementById("inscErr").style.display = "none";
+    document.getElementById("inscModalOverlay").style.display = "block";
+  }
+
+  document.getElementById("inscBtnCancel").addEventListener("click", () => {
+    document.getElementById("inscModalOverlay").style.display = "none";
+    inscTorneoActual = null;
+  });
+
+  document.getElementById("inscBtnContinuar").addEventListener("click", () => {
+    const nombre = document.getElementById("inscNombre").value.trim();
+    const apellido = document.getElementById("inscApellido").value.trim();
+    const telefono = document.getElementById("inscTelefono").value.trim();
+    const email = document.getElementById("inscEmail").value.trim();
+    const errEl = document.getElementById("inscErr");
+    if (!nombre || !apellido || !telefono || !email) {
+      errEl.textContent = "Completá todos los campos obligatorios."; errEl.style.display = "block"; return;
+    }
+    if (inscTorneoActual.formato === "Equipo") {
+      const j2n = document.getElementById("inscJ2Nombre").value.trim();
+      const j2a = document.getElementById("inscApellido2").value.trim();
+      const j2t = document.getElementById("inscJ2Telefono").value.trim();
+      const j2e = document.getElementById("inscJ2Email").value.trim();
+      if (!j2n || !j2a || !j2t || !j2e) {
+        errEl.textContent = "Completá los datos del jugador 2."; errEl.style.display = "block"; return;
+      }
+    }
+    errEl.style.display = "none";
+    // Show payment modal
+    document.getElementById("inscModalOverlay").style.display = "none";
+    document.getElementById("pagoTorneoNombre").textContent = inscTorneoActual.juego + " — " + inscTorneoActual.modalidad;
+    document.getElementById("pagoMonto").textContent = inscTorneoActual.costo ? "$" + inscTorneoActual.costo : "Gratis";
+    const pagoModal = document.getElementById("pagoModalOverlay");
+    pagoModal.style.display = "flex";
+  });
+
+  document.getElementById("btnPagoCancelar").addEventListener("click", () => {
+    document.getElementById("pagoModalOverlay").style.display = "none";
+    document.getElementById("inscModalOverlay").style.display = "block";
+  });
+
+  document.getElementById("btnPagarMP").addEventListener("click", async () => {
+    if (!inscTorneoActual) return;
+    const btn = document.getElementById("btnPagarMP");
+    btn.disabled = true; btn.textContent = "Procesando...";
+    try {
+      // TODO: Replace with real MP Checkout Pro URL when API is ready
+      // For now: save inscription and show success
+      const datos = {
+        torneoId: inscTorneoActual.id,
+        torneoJuego: inscTorneoActual.juego,
+        nombre: document.getElementById("inscNombre").value.trim(),
+        apellido: document.getElementById("inscApellido").value.trim(),
+        telefono: document.getElementById("inscTelefono").value.trim(),
+        email: document.getElementById("inscEmail").value.trim(),
+        fantasia: document.getElementById("inscFantasia")?.value.trim() || "",
+        fechaInscripcion: new Date().toISOString(),
+        pagado: inscTorneoActual.costo ? false : true, // will be set true after MP confirms
+      };
+      if (inscTorneoActual.formato === "Equipo") {
+        datos.jugador2Nombre = document.getElementById("inscJ2Nombre").value.trim();
+        datos.jugador2Apellido = document.getElementById("inscApellido2").value.trim();
+        datos.jugador2Telefono = document.getElementById("inscJ2Telefono").value.trim();
+        datos.jugador2Email = document.getElementById("inscJ2Email").value.trim();
+      }
+      await addDoc(collection(db, "inscripciones"), datos);
+      // Update inscriptos count
+      const tnRef = doc(db, "torneos", inscTorneoActual.id);
+      const tnSnap = await getDoc(tnRef);
+      const actual = tnSnap.data().inscriptos || 0;
+      await setDoc(tnRef, {inscriptos: actual + 1}, {merge: true});
+
+      document.getElementById("pagoModalOverlay").style.display = "none";
+      // Show success
+      const list = document.getElementById("tnClientList");
+      list.innerHTML = "<div style='text-align:center;padding:40px;'><div style='font-size:3rem;margin-bottom:12px;'>🎉</div><div style='font-family:Orbitron,monospace;font-size:0.85rem;font-weight:700;color:var(--accent-green);margin-bottom:8px;'>¡Inscripción completada!</div><div style='font-size:0.82rem;color:var(--text-secondary);'>Tu lugar en el torneo de " + inscTorneoActual.juego + " está confirmado.</div></div>";
+      inscTorneoActual = null;
+      setTimeout(() => renderTorneosClient(), 3000);
+    } catch(e) {
+      console.error(e);
+      btn.textContent = "Error — intentá de nuevo";
+    } finally {
+      btn.disabled = false;
+      if(btn.textContent !== "Error — intentá de nuevo") btn.textContent = "🔵 Pagar con Mercado Pago";
+    }
+  });
 
   document.querySelectorAll(".tn-filter-client").forEach(btn => {
     btn.addEventListener("click", () => {

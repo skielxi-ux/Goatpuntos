@@ -320,6 +320,7 @@
           <div class="form-group"><label class="form-label">Fecha</label><input class="form-input" id="tnFecha" type="date"></div>
           <div class="form-group"><label class="form-label">Cupos</label><input class="form-input" id="tnCupos" type="number" placeholder="Ej: 16" min="1"></div>
           <div class="form-group"><label class="form-label">Premio / Recompensa</label><input class="form-input" id="tnPremio" placeholder="Ej: 500 puntos + medalla" autocomplete="off"></div>
+          <div class="form-group"><label class="form-label">Costo inscripción ($)</label><input class="form-input" id="tnCosto" type="number" placeholder="Ej: 500" min="0"></div>
           <button class="btn btn-add" id="btnAddTorneo"><span>+ Crear</span></button>
         </div>
         <div class="alert alert-success" id="tnOk"><span>✓</span><span id="tnOkMsg"></span></div>
@@ -426,6 +427,7 @@
     const fecha = document.getElementById("tnFecha").value;
     const cupos = parseInt(document.getElementById("tnCupos").value);
     const premio = document.getElementById("tnPremio").value.trim();
+    const costo = parseFloat(document.getElementById("tnCosto").value) || 0;
     if (!juego) { showMsg("tn","err","Ingresá el juego."); return; }
     if (!fecha) { showMsg("tn","err","Ingresá la fecha."); return; }
     if (!cupos || cupos < 1) { showMsg("tn","err","Ingresá los cupos."); return; }
@@ -433,13 +435,14 @@
     const fechaDate = new Date(fecha + "T00:00:00");
     const estado = fechaDate > today ? "proximo" : "activo";
     const id = "tn_" + Date.now();
-    await setDoc(doc(db,"torneos",id), {juego,modalidad,consola,formato,fecha,cupos,premio,estado,creado:new Date().toISOString()});
+    await setDoc(doc(db,"torneos",id), {juego,modalidad,consola,formato,fecha,cupos,premio,costo,estado,inscriptos:0,creado:new Date().toISOString()});
     document.getElementById("tnJuego").value = "";
     document.getElementById("tnModalidad").value = "";
     document.getElementById("tnConsola").value = "";
     document.getElementById("tnFecha").value = "";
     document.getElementById("tnCupos").value = "";
     document.getElementById("tnPremio").value = "";
+    document.getElementById("tnCosto").value = "";
     showMsg("tn","ok","Torneo de " + juego + " creado.");
     renderTorneos();
   }
@@ -470,9 +473,11 @@
           </div>
           <div style="display:flex;gap:20px;font-size:0.8rem;color:var(--text-secondary);">
             <span>📅 ${fechaStr}</span>
-            <span>👥 ${t.cupos} cupos</span>
+            <span>👥 ${t.inscriptos||0}/${t.cupos} inscriptos</span>
             ${t.premio ? `<span>🏆 ${t.premio}</span>` : ""}
+            ${t.costo ? `<span>💰 $${t.costo}</span>` : "<span>💰 Gratis</span>"}
           </div>
+          <div style="margin-top:8px;"><button class="btn" style="font-size:0.68rem;padding:4px 12px;border:1px solid var(--accent-blue);color:var(--accent-blue);background:transparent;border-radius:3px;cursor:pointer;" onclick="window._verInscriptos('${t.id}', '${t.juego}')">Ver inscriptos (${t.inscriptos||0})</button></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;min-width:120px;align-items:flex-end;">
           <select class="form-input" style="font-size:0.72rem;padding:4px 8px;cursor:pointer;" onchange="window._changeTnEstado('${t.id}', this.value)">
@@ -485,6 +490,52 @@
       list.appendChild(card);
     });
   }
+
+  window._verInscriptos = async (tnId, juego) => {
+    const snap = await getDocs(collection(db, "inscripciones"));
+    const insc = [];
+    snap.forEach(d => { if(d.data().torneoId === tnId) insc.push(d.data()); });
+    let html = "<div style='font-family:Rajdhani,sans-serif;'><div style='font-size:1rem;font-weight:700;margin-bottom:14px;color:#fff;'>Inscriptos — " + juego + "</div>";
+    if (!insc.length) { html += "<div style='color:var(--text-muted);font-size:0.85rem;'>No hay inscriptos aún.</div>"; }
+    insc.forEach((ins, i) => {
+      html += "<div style='background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:10px 14px;margin-bottom:8px;font-size:0.82rem;'>";
+      html += "<div style='font-weight:700;color:var(--accent-green);margin-bottom:4px;'>" + (i+1) + ". " + ins.nombre + " " + ins.apellido + (ins.fantasia ? " — <span style=\'color:var(--accent-yellow);\'>" + ins.fantasia + "</span>" : "") + "</div>";
+      html += "<div style='color:var(--text-secondary);'>📞 " + ins.telefono + " &nbsp;|&nbsp; ✉️ " + ins.email + "</div>";
+      if (ins.jugador2Nombre) html += "<div style='color:var(--text-muted);margin-top:4px;'>J2: " + ins.jugador2Nombre + " " + ins.jugador2Apellido + " — " + ins.jugador2Email + "</div>";
+      html += "</div>";
+    });
+    html += "</div>";
+    document.getElementById("modalMsg").innerHTML = html;
+    document.getElementById("btnConfirmDel").style.display = "none";
+    document.getElementById("modalOverlay").classList.add("show");
+    document.getElementById("modalOverlay").onclick = (e) => { if(e.target === document.getElementById("modalOverlay")) { closeModal(); document.getElementById("btnConfirmDel").style.display=""; } };
+  };
+
+  window._verInscriptos = async (tnId, juego) => {
+    const snap = await getDocs(collection(db, "inscripciones"));
+    const insc = [];
+    snap.forEach(d => { if(d.data().torneoId === tnId) insc.push(d.data()); });
+    let html = "<div style='font-family:Rajdhani,sans-serif;'><div style='font-size:1rem;font-weight:700;margin-bottom:14px;color:#fff;'>Inscriptos — " + juego + "</div>";
+    if (!insc.length) { html += "<div style='color:var(--text-muted);font-size:0.85rem;'>No hay inscriptos aún.</div>"; }
+    insc.forEach((ins, i) => {
+      html += "<div style='background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:10px 14px;margin-bottom:8px;font-size:0.82rem;'>";
+      html += "<div style='font-weight:700;color:var(--accent-green);margin-bottom:4px;'>" + (i+1) + ". " + ins.nombre + " " + ins.apellido + (ins.fantasia ? " — <span style=color:var(--accent-yellow)>" + ins.fantasia + "</span>" : "") + "</div>";
+      html += "<div style='color:var(--text-secondary);'>📞 " + ins.telefono + " &nbsp;|&nbsp; ✉️ " + ins.email + "</div>";
+      if (ins.jugador2Nombre) html += "<div style='color:var(--text-muted);margin-top:4px;'>J2: " + ins.jugador2Nombre + " " + ins.jugador2Apellido + " — " + ins.jugador2Email + "</div>";
+      html += "</div>";
+    });
+    html += "</div>";
+    document.getElementById("modalMsg").innerHTML = html;
+    document.getElementById("btnConfirmDel").style.display = "none";
+    document.getElementById("modalOverlay").classList.add("show");
+    document.getElementById("modalOverlay").addEventListener("click", function handler(e) {
+      if(e.target === document.getElementById("modalOverlay")) {
+        closeModal();
+        document.getElementById("btnConfirmDel").style.display = "";
+        document.getElementById("modalOverlay").removeEventListener("click", handler);
+      }
+    });
+  };
 
   window._changeTnEstado = async (id, estado) => {
     await setDoc(doc(db,"torneos",id), {estado}, {merge:true});
