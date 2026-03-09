@@ -380,6 +380,10 @@
         <span class="nav-icon">🏆</span>
         <span class="nav-label">Beneficios disponibles</span>
       </div>
+      <div class="nav-item" data-panel="torneos">
+        <span class="nav-icon">🎮</span>
+        <span class="nav-label">Torneos</span>
+      </div>
     </aside>
 
     <!-- MAIN PANELS -->
@@ -472,6 +476,23 @@
         </div>
       </div>
 
+      <div class="content-panel" id="panel-torneos">
+        <div class="panel">
+          <div class="panel-header">
+            <span>🎮</span>
+            <div class="panel-title">Torneos</div>
+          </div>
+          <div class="panel-body" style="padding:0;">
+            <div style="display:flex;border-bottom:1px solid var(--border);">
+              <button class="tn-filter-client active" data-filter="activo" style="flex:1;padding:12px;background:transparent;border:none;color:var(--accent-green);font-family:'Orbitron',monospace;font-size:0.62rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;border-bottom:2px solid var(--accent-green);">🟢 ACTIVOS</button>
+              <button class="tn-filter-client" data-filter="proximo" style="flex:1;padding:12px;background:transparent;border:none;color:var(--text-secondary);font-family:'Orbitron',monospace;font-size:0.62rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;border-bottom:2px solid transparent;">🔵 PRÓXIMOS</button>
+              <button class="tn-filter-client" data-filter="finalizado" style="flex:1;padding:12px;background:transparent;border:none;color:var(--text-secondary);font-family:'Orbitron',monospace;font-size:0.62rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;border-bottom:2px solid transparent;">⚫ FINALIZADOS</button>
+            </div>
+            <div style="padding:16px;" id="tnClientList"></div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- end main-content -->
   </div><!-- end app-body -->
 </div><!-- end appLayout -->
@@ -505,6 +526,7 @@
       item.classList.add("active");
       document.getElementById("panel-" + item.dataset.panel).classList.add("active");
       if (item.dataset.panel === "disponibles") renderDisponibles();
+      if (item.dataset.panel === "torneos") renderTorneosClient();
     });
   });
 
@@ -688,6 +710,61 @@
     } catch(e) { console.error(e); showAlert("err","Error de conexión."); }
     finally { btn.disabled=false; btn.querySelector("span").textContent="⚡  Canjear ahora"; }
   }
+
+  // ── TORNEOS ──────────────────────────────────────────
+  let tnClientFilter = "activo";
+
+  async function renderTorneosClient() {
+    const list = document.getElementById("tnClientList");
+    list.innerHTML = "<div style='text-align:center;padding:24px;color:var(--text-muted);font-size:0.82rem;'>Cargando...</div>";
+    const snap = await getDocs(collection(db, "torneos"));
+    const torneos = [];
+    snap.forEach(d => torneos.push({id: d.id, ...d.data()}));
+    const filtered = torneos.filter(t => t.estado === tnClientFilter);
+    filtered.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+    if (!filtered.length) {
+      list.innerHTML = "<div style='text-align:center;padding:32px;color:var(--text-muted);font-size:0.82rem;text-transform:uppercase;'>No hay torneos en esta categoría</div>";
+      return;
+    }
+    list.innerHTML = "";
+    filtered.forEach(t => {
+      const fechaStr = t.fecha ? new Date(t.fecha + "T00:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}) : "—";
+      const estadoColor = t.estado === "activo" ? "var(--accent-green)" : t.estado === "proximo" ? "var(--accent-blue)" : "var(--text-muted)";
+      const estadoLabel = t.estado === "activo" ? "🟢 Activo" : t.estado === "proximo" ? "🔵 Próximo" : "⚫ Finalizado";
+      const card = document.createElement("div");
+      card.style.cssText = "background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px;";
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-family:'Orbitron',monospace;font-size:0.88rem;font-weight:700;color:#fff;">🎮 ${t.juego}</div>
+          <span style="font-size:0.7rem;font-weight:700;color:${estadoColor};">${estadoLabel}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+          ${t.modalidad ? `<span style="background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.3);color:var(--accent-blue);padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;">${t.modalidad}</span>` : ""}
+          ${t.consola ? `<span style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:var(--accent-green);padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;">${t.consola}</span>` : ""}
+          <span style="background:rgba(255,208,96,0.1);border:1px solid rgba(255,208,96,0.3);color:var(--accent-yellow);padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;">${t.formato}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:0.78rem;color:var(--text-secondary);">
+          <span>📅 ${fechaStr}</span>
+          <span>👥 ${t.cupos} cupos</span>
+          ${t.premio ? `<span>🏆 ${t.premio}</span>` : ""}
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  document.querySelectorAll(".tn-filter-client").forEach(btn => {
+    btn.addEventListener("click", () => {
+      tnClientFilter = btn.dataset.filter;
+      document.querySelectorAll(".tn-filter-client").forEach(b => {
+        b.style.color = "var(--text-secondary)";
+        b.style.borderBottom = "2px solid transparent";
+      });
+      const color = tnClientFilter === "activo" ? "var(--accent-green)" : tnClientFilter === "proximo" ? "var(--accent-blue)" : "var(--text-muted)";
+      btn.style.color = color;
+      btn.style.borderBottom = "2px solid " + color;
+      renderTorneosClient();
+    });
+  });
 
   // ── LOGOUT ────────────────────────────────────────────
   function logout() {

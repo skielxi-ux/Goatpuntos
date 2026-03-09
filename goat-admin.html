@@ -204,6 +204,7 @@
   <div class="tab" id="tab-btn-codigos">Códigos</div>
   <div class="tab" id="tab-btn-historial">Historial canjes</div>
   <div class="tab" id="tab-btn-beneficios">Beneficios</div>
+  <div class="tab" id="tab-btn-torneos">Torneos</div>
 
 </div>
 
@@ -304,7 +305,41 @@
     </div>
   </div>
 
-  
+  <!-- TORNEOS -->
+  <div class="tab-content" id="tab-torneos">
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">Crear torneo</div></div>
+      <div class="panel-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Juego</label><input class="form-input" id="tnJuego" placeholder="Ej: Valorant, FIFA..." autocomplete="off"></div>
+          <div class="form-group"><label class="form-label">Modalidad</label><input class="form-input" id="tnModalidad" placeholder="Ej: Eliminación directa..." autocomplete="off"></div>
+          <div class="form-group"><label class="form-label">Consola / Plataforma</label><input class="form-input" id="tnConsola" placeholder="Ej: PS5, PC..." autocomplete="off"></div>
+        </div>
+        <div class="form-row" style="margin-top:12px;">
+          <div class="form-group"><label class="form-label">Formato</label><select class="form-input" id="tnFormato" style="cursor:pointer;"><option value="Solo">Solo (1v1)</option><option value="Equipo">Equipo</option></select></div>
+          <div class="form-group"><label class="form-label">Fecha</label><input class="form-input" id="tnFecha" type="date"></div>
+          <div class="form-group"><label class="form-label">Cupos</label><input class="form-input" id="tnCupos" type="number" placeholder="Ej: 16" min="1"></div>
+          <div class="form-group"><label class="form-label">Premio / Recompensa</label><input class="form-input" id="tnPremio" placeholder="Ej: 500 puntos + medalla" autocomplete="off"></div>
+          <button class="btn btn-add" id="btnAddTorneo"><span>+ Crear</span></button>
+        </div>
+        <div class="alert alert-success" id="tnOk"><span>✓</span><span id="tnOkMsg"></span></div>
+        <div class="alert alert-error" id="tnErr"><span>✗</span><span id="tnErrMsg"></span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">Torneos</div></div>
+      <div class="panel-body" style="padding:0;">
+        <div style="display:flex;border-bottom:1px solid var(--border);">
+          <button class="tn-filter active" data-filter="activo" style="flex:1;padding:12px;background:transparent;border:none;color:var(--accent-green);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;border-bottom:2px solid var(--accent-green);">🟢 ACTIVOS</button>
+          <button class="tn-filter" data-filter="proximo" style="flex:1;padding:12px;background:transparent;border:none;color:var(--text-secondary);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;border-bottom:2px solid transparent;">🔵 PRÓXIMOS</button>
+          <button class="tn-filter" data-filter="finalizado" style="flex:1;padding:12px;background:transparent;border:none;color:var(--text-secondary);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;border-bottom:2px solid transparent;">⚫ FINALIZADOS</button>
+        </div>
+        <div id="tnTableWrap" style="padding:16px;">
+          <div id="tnList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </div>
 
@@ -361,7 +396,7 @@
 
   // TABS
   function switchTab(name) {
-    const names = ["dashboard","codigos","historial","beneficios"];
+    const names = ["dashboard","codigos","historial","beneficios","torneos"];
     document.querySelectorAll(".tab").forEach((t,i) => t.classList.toggle("active", names[i] === name));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
     document.getElementById("tab-" + name).classList.add("active");
@@ -369,8 +404,98 @@
     if (name === "codigos") renderCodesTable();
     if (name === "historial") renderHistTable();
     if (name === "beneficios") { renderBenTable(); renderBenHistTable(); }
+    if (name === "torneos") renderTorneos();
   }
 
+
+  // TORNEOS
+  let tnFilter = "activo";
+
+  async function getTorneos() {
+    const snap = await getDocs(collection(db, "torneos"));
+    const r = [];
+    snap.forEach(d => r.push({id: d.id, ...d.data()}));
+    return r;
+  }
+
+  async function addTorneo() {
+    const juego = document.getElementById("tnJuego").value.trim();
+    const modalidad = document.getElementById("tnModalidad").value.trim();
+    const consola = document.getElementById("tnConsola").value.trim();
+    const formato = document.getElementById("tnFormato").value;
+    const fecha = document.getElementById("tnFecha").value;
+    const cupos = parseInt(document.getElementById("tnCupos").value);
+    const premio = document.getElementById("tnPremio").value.trim();
+    if (!juego) { showMsg("tn","err","Ingresá el juego."); return; }
+    if (!fecha) { showMsg("tn","err","Ingresá la fecha."); return; }
+    if (!cupos || cupos < 1) { showMsg("tn","err","Ingresá los cupos."); return; }
+    const today = new Date(); today.setHours(0,0,0,0);
+    const fechaDate = new Date(fecha + "T00:00:00");
+    const estado = fechaDate > today ? "proximo" : "activo";
+    const id = "tn_" + Date.now();
+    await setDoc(doc(db,"torneos",id), {juego,modalidad,consola,formato,fecha,cupos,premio,estado,creado:new Date().toISOString()});
+    document.getElementById("tnJuego").value = "";
+    document.getElementById("tnModalidad").value = "";
+    document.getElementById("tnConsola").value = "";
+    document.getElementById("tnFecha").value = "";
+    document.getElementById("tnCupos").value = "";
+    document.getElementById("tnPremio").value = "";
+    showMsg("tn","ok","Torneo de " + juego + " creado.");
+    renderTorneos();
+  }
+
+  async function renderTorneos() {
+    const list = document.getElementById("tnList");
+    list.innerHTML = "<div style='text-align:center;padding:24px;color:var(--text-muted);font-size:0.82rem;'>Cargando...</div>";
+    const torneos = await getTorneos();
+    const filtered = torneos.filter(t => t.estado === tnFilter);
+    if (!filtered.length) {
+      list.innerHTML = "<div style='text-align:center;padding:32px;color:var(--text-muted);font-size:0.82rem;text-transform:uppercase;'>No hay torneos en esta categoría</div>";
+      return;
+    }
+    // Sort by fecha
+    filtered.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+    list.innerHTML = "";
+    filtered.forEach(t => {
+      const fechaStr = t.fecha ? new Date(t.fecha + "T00:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}) : "—";
+      const card = document.createElement("div");
+      card.style.cssText = "background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:16px 20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;";
+      card.innerHTML = `
+        <div style="flex:1;">
+          <div style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:8px;">🎮 ${t.juego}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            ${t.modalidad ? `<span style="background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.3);color:var(--accent-blue);padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;">${t.modalidad}</span>` : ""}
+            ${t.consola ? `<span style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:var(--accent-green);padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;">${t.consola}</span>` : ""}
+            <span style="background:rgba(255,208,96,0.1);border:1px solid rgba(255,208,96,0.3);color:var(--accent-yellow);padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;">${t.formato}</span>
+          </div>
+          <div style="display:flex;gap:20px;font-size:0.8rem;color:var(--text-secondary);">
+            <span>📅 ${fechaStr}</span>
+            <span>👥 ${t.cupos} cupos</span>
+            ${t.premio ? `<span>🏆 ${t.premio}</span>` : ""}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:120px;align-items:flex-end;">
+          <select class="form-input" style="font-size:0.72rem;padding:4px 8px;cursor:pointer;" onchange="window._changeTnEstado('${t.id}', this.value)">
+            <option value="proximo" ${t.estado==="proximo"?"selected":""}>🔵 Próximo</option>
+            <option value="activo" ${t.estado==="activo"?"selected":""}>🟢 Activo</option>
+            <option value="finalizado" ${t.estado==="finalizado"?"selected":""}>⚫ Finalizado</option>
+          </select>
+          <button class="btn btn-danger" style="width:100%;padding:6px;" onclick="window._deleteTorneo('${t.id}')"><span>🗑 Eliminar</span></button>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  window._changeTnEstado = async (id, estado) => {
+    await setDoc(doc(db,"torneos",id), {estado}, {merge:true});
+    renderTorneos();
+  };
+
+  window._deleteTorneo = async (id) => {
+    document.getElementById("modalMsg").innerHTML = "¿Eliminar este torneo?";
+    document.getElementById("btnConfirmDel").onclick = async () => { await deleteDoc(doc(db,"torneos",id)); closeModal(); renderTorneos(); };
+    document.getElementById("modalOverlay").classList.add("show");
+  };
 
   // FIREBASE HELPERS
   async function getCodes() {
@@ -710,6 +835,20 @@
   document.getElementById("tab-btn-historial").addEventListener("click", () => switchTab("historial"));
   document.getElementById("tab-btn-beneficios").addEventListener("click", () => switchTab("beneficios"));
   document.getElementById("btnAddCode").addEventListener("click", addCode);
+  document.getElementById("btnAddTorneo").addEventListener("click", addTorneo);
+  document.getElementById("tab-btn-torneos").addEventListener("click", () => switchTab("torneos"));
+  document.querySelectorAll(".tn-filter").forEach(btn => {
+    btn.addEventListener("click", () => {
+      tnFilter = btn.dataset.filter;
+      document.querySelectorAll(".tn-filter").forEach(b => {
+        b.style.color = "var(--text-secondary)";
+        b.style.borderBottom = "2px solid transparent";
+      });
+      btn.style.color = tnFilter === "activo" ? "var(--accent-green)" : tnFilter === "proximo" ? "var(--accent-blue)" : "var(--text-muted)";
+      btn.style.borderBottom = "2px solid " + (tnFilter === "activo" ? "var(--accent-green)" : tnFilter === "proximo" ? "var(--accent-blue)" : "var(--text-muted)");
+      renderTorneos();
+    });
+  });
   document.getElementById("btnExportCodigos").addEventListener("click", () => exportCSV("codigos"));
   document.getElementById("btnExportHistorial").addEventListener("click", () => exportCSV("historial"));
   document.getElementById("btnExportBeneficios").addEventListener("click", () => exportCSV("beneficios"));
