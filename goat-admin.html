@@ -659,30 +659,29 @@
   // RENDER CODES
   async function renderCodesTable() {
     const tbody = document.getElementById("codesTableBody");
-    tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>Cargando...</td></tr>";
+    tbody.innerHTML = "<tr class='empty-row'><td colspan='8'>Cargando...</td></tr>";
     const codes = await getCodes();
     const q = (document.getElementById("searchCode").value || "").toLowerCase();
     tbody.innerHTML = "";
     const entries = Object.entries(codes).filter(([c,t]) => !q || c.toLowerCase().includes(q) || t.nombre.toLowerCase().includes(q));
     document.getElementById("codeCount").textContent = entries.length + " resultado(s)";
     if (!entries.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>No hay codigos cargados</td></tr>"; return; }
-    // Auto-delete expired unused codes
     const now = new Date();
+    // Auto-reset canjeados codes after 1 month from creado
     for (const [code, t] of entries) {
-      if (!t.usado && t.creado) {
+      if (t.usado && t.creado) {
         const parts = t.creado.split("/");
         if (parts.length === 3) {
           const creadoDate = new Date(parts[2], parts[1]-1, parts[0]);
-          const venceDate = new Date(creadoDate);
-          venceDate.setDate(venceDate.getDate() + 30);
-          if (venceDate < now) {
-            await deleteDoc(doc(db, "codigos", code));
-            console.log("Auto-deleted expired code:", code);
+          const resetDate = new Date(creadoDate);
+          resetDate.setMonth(resetDate.getMonth() + 1);
+          if (resetDate <= now) {
+            await setDoc(doc(db, "codigos", code), {usado: false}, {merge: true});
           }
         }
       }
     }
-    // Reload after deletions
+    // Reload after resets
     const freshCodes = await getCodes();
     const freshEntries = Object.entries(freshCodes).filter(([c,t]) => !q || c.toLowerCase().includes(q) || t.nombre.toLowerCase().includes(q));
     tbody.innerHTML = "";
@@ -690,32 +689,53 @@
     if (!freshEntries.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='8'>No hay codigos cargados</td></tr>"; return; }
 
     freshEntries.forEach(([code,t],i) => {
-      // Calculate expiry from creado date (dd/mm/yyyy) + 30 days
       let venceLabel = "—";
       let venceStyle = "color:var(--text-secondary);font-size:0.82rem;";
-      let diasVence = null;
-      if (t.creado && !t.usado) {
+      if (t.creado) {
         const parts = t.creado.split("/");
         if (parts.length === 3) {
           const creadoDate = new Date(parts[2], parts[1]-1, parts[0]);
-          const venceDate = new Date(creadoDate);
-          venceDate.setDate(venceDate.getDate() + 30);
-          diasVence = Math.ceil((venceDate - now) / (1000*60*60*24));
-          venceLabel = venceDate.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
-          if (diasVence <= 0) { venceStyle = "color:var(--accent-red);font-size:0.82rem;font-weight:700;"; venceLabel += " ⚠️"; }
-          else if (diasVence <= 5) { venceStyle = "color:var(--accent-red);font-size:0.82rem;font-weight:700;"; venceLabel += " (" + diasVence + "d)"; }
-          else if (diasVence <= 10) { venceStyle = "color:var(--accent-yellow);font-size:0.82rem;font-weight:600;"; venceLabel += " (" + diasVence + "d)"; }
-          else { venceStyle = "color:var(--accent-green);font-size:0.82rem;"; venceLabel += " (" + diasVence + "d)"; }
+          const resetDate = new Date(creadoDate);
+          resetDate.setMonth(resetDate.getMonth() + 1);
+          const diasReset = Math.ceil((resetDate - now) / (1000*60*60*24));
+          venceLabel = resetDate.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
+          if (t.usado) {
+            venceStyle = "color:var(--accent-green);font-size:0.82rem;";
+            venceLabel += " (disponible en " + Math.max(0,diasReset) + "d)";
+          } else if (diasReset <= 5) {
+            venceStyle = "color:var(--accent-yellow);font-size:0.82rem;font-weight:600;";
+            venceLabel += " (" + diasReset + "d)";
+          } else {
+            venceStyle = "color:var(--accent-green);font-size:0.82rem;";
+            venceLabel += " (" + diasReset + "d)";
+          }
         }
       }
       const tr = document.createElement("tr");
-      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td><td class='td-code'>" + code + "</td><td>" + t.emoji + " " + t.nombre + "</td><td class='td-pts'>+" + t.puntos + "</td><td><span class='td-used " + (t.usado?"yes":"no") + "'>" + (t.usado?"Canjeado":"Disponible") + "</span></td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + (t.creado||"—") + "</td><td style='" + venceStyle + "'>" + venceLabel + "</td><td><button class='btn btn-danger' id='del_" + code + "'><span>Eliminar</span></button></td>";
+      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"00") + "</td><td class='td-code'>" + code + "</td><td>" + t.emoji + " " + t.nombre + "</td><td class='td-pts'>+" + t.puntos + "</td><td><span class='td-used " + (t.usado?"yes":"no") + "'>" + (t.usado?"Canjeado":"Disponible") + "</span></td><td style='color:var(--text-secondary);font-size:0.82rem;'>" + (t.creado||"—") + "</td><td style='" + venceStyle + "'>" + venceLabel + "</td><td style='display:flex;gap:6px;'><button class='btn' id='edit_" + code + "' style='font-size:0.65rem;padding:4px 10px;border-color:var(--accent-blue);color:var(--accent-blue);'><span>✏️</span></button><button class='btn btn-danger' id='del_" + code + "'><span>Eliminar</span></button></td>";
       tbody.appendChild(tr);
       document.getElementById("del_"+code).onclick = () => confirmDelete(code, t.nombre);
+      document.getElementById("edit_"+code).onclick = () => editCode(code, t);
     });
   }
 
-  function confirmDelete(code, nombre) {
+  function editCode(oldCode, t) {
+    const newCode = prompt("Nuevo código para " + t.nombre + " (actual: " + oldCode + "):", oldCode);
+    if (!newCode || newCode.trim() === "" || newCode.trim().toUpperCase() === oldCode) return;
+    const raw = newCode.trim().toUpperCase();
+    if (!confirm("¿Cambiar código " + oldCode + " → " + raw + "?")) return;
+    getDoc(doc(db, "codigos", oldCode)).then(snap => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      setDoc(doc(db, "codigos", raw), {...data, usado: false}).then(() => {
+        deleteDoc(doc(db, "codigos", oldCode)).then(() => {
+          renderCodesTable(); renderDashboard();
+        });
+      });
+    });
+  }
+
+    function confirmDelete(code, nombre) {
     deleteTarget = code;
     document.getElementById("modalMsg").innerHTML = "Eliminar codigo <strong>" + code + "</strong> (" + nombre + ")?";
     document.getElementById("btnConfirmDel").onclick = async () => { await deleteDoc(doc(db,"codigos",deleteTarget)); closeModal(); renderCodesTable(); renderDashboard(); };
@@ -877,7 +897,7 @@
 
   async function renderBenHistTable() {
     const tbody = document.getElementById("benHistTableBody");
-    tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>Cargando...</td></tr>";
+    tbody.innerHTML = "<tr class='empty-row'><td colspan='8'>Cargando...</td></tr>";
     const hist = await getBenHist();
     tbody.innerHTML = "";
     if (!hist.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>No hay beneficios aplicados aun</td></tr>"; return; }
