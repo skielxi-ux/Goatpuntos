@@ -553,9 +553,20 @@
         row.style.cssText = "background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px;";
         const info = document.createElement("div");
         info.style.flex = "1";
-        info.innerHTML = "<div style='font-weight:700;font-size:0.9rem;color:#fff;margin-bottom:5px;'>" + (i+1) + ". " + ins.nombre + " " + ins.apellido + (ins.fantasia ? " <span style='color:var(--accent-yellow);font-size:0.78rem;'>— " + ins.fantasia + "</span>" : "") + "</div>"
-          + "<div style='font-size:0.78rem;color:var(--text-secondary);'>📞 " + ins.telefono + " &nbsp;·&nbsp; ✉️ " + ins.email + "</div>"
-          + (ins.jugador2Nombre ? "<div style='font-size:0.75rem;color:var(--text-muted);margin-top:5px;padding-top:5px;border-top:1px solid var(--border);'>J2: " + ins.jugador2Nombre + " " + ins.jugador2Apellido + " · " + ins.jugador2Email + "</div>" : "");
+        // Build info HTML
+        let infoHtml = "<div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>";
+        if (ins.logoUrl) {
+          infoHtml += "<img src='" + ins.logoUrl + "' style='width:40px;height:40px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;'>";
+        }
+        infoHtml += "<div>";
+        infoHtml += "<div style='font-weight:700;font-size:0.92rem;color:#fff;'>" + (i+1) + ". " + ins.nombre + " " + ins.apellido + "</div>";
+        if (ins.fantasia) infoHtml += "<div style='font-size:0.78rem;color:var(--accent-yellow);font-weight:600;'>⚔️ " + ins.fantasia + "</div>";
+        infoHtml += "</div></div>";
+        infoHtml += "<div style='font-size:0.78rem;color:var(--text-secondary);'>📞 " + ins.telefono + " &nbsp;·&nbsp; ✉️ " + ins.email + "</div>";
+        if (ins.jugador2Nombre) {
+          infoHtml += "<div style='font-size:0.75rem;color:var(--text-muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);'><span style='color:var(--accent-blue);font-weight:700;'>J2:</span> " + ins.jugador2Nombre + " " + ins.jugador2Apellido + " · 📞 " + ins.jugador2Telefono + " · ✉️ " + ins.jugador2Email + "</div>";
+        }
+        info.innerHTML = infoHtml;
         const delBtn = document.createElement("button");
         delBtn.style.cssText = "padding:6px 14px;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.4);color:var(--accent-red);border-radius:4px;cursor:pointer;font-family:'Orbitron',monospace;font-size:0.65rem;font-weight:700;white-space:nowrap;flex-shrink:0;";
         delBtn.textContent = "🗑 Eliminar";

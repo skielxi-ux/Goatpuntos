@@ -928,6 +928,16 @@
     try {
       // TODO: Replace with real MP Checkout Pro URL when API is ready
       // For now: save inscription and show success
+      // Read logo as base64 if provided
+      let logoBase64 = "";
+      const logoFile = document.getElementById("inscLogo")?.files[0];
+      if (logoFile) {
+        logoBase64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(logoFile);
+        });
+      }
       const datos = {
         torneoId: inscTorneoActual.id,
         torneoJuego: inscTorneoActual.juego,
@@ -936,8 +946,9 @@
         telefono: document.getElementById("inscTelefono").value.trim(),
         email: document.getElementById("inscEmail").value.trim(),
         fantasia: document.getElementById("inscFantasia")?.value.trim() || "",
+        logoUrl: logoBase64,
         fechaInscripcion: new Date().toISOString(),
-        pagado: inscTorneoActual.costo ? false : true, // will be set true after MP confirms
+        pagado: inscTorneoActual.costo ? false : true,
       };
       if (inscTorneoActual.formato === "Equipo") {
         datos.jugador2Nombre = document.getElementById("inscJ2Nombre").value.trim();
