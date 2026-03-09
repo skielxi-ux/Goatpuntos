@@ -496,47 +496,6 @@
     </div><!-- end main-content -->
   </div><!-- end app-body -->
 <!-- INSCRIPCION MODAL -->
-<div id="inscModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;overflow-y:auto;padding:20px;box-sizing:border-box;">
-  <div style="max-width:520px;margin:40px auto;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:28px;">
-    <div style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:var(--accent-green);margin-bottom:6px;" id="inscModalTitle">Inscripción al torneo</div>
-    <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:20px;" id="inscModalSubtitle"></div>
-
-    <!-- JUGADOR 1 -->
-    <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;" id="inscJ1Label">Datos del jugador</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-      <div><label class="form-label">Nombre *</label><input class="form-input" id="inscNombre" placeholder="Nombre" autocomplete="off"></div>
-      <div><label class="form-label">Apellido *</label><input class="form-input" id="inscApellido" placeholder="Apellido" autocomplete="off"></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-      <div><label class="form-label">Teléfono *</label><input class="form-input" id="inscTelefono" placeholder="Ej: 3816000000" autocomplete="off"></div>
-      <div><label class="form-label">Email *</label><input class="form-input" id="inscEmail" type="email" placeholder="email@ejemplo.com" autocomplete="off"></div>
-    </div>
-
-    <!-- EQUIPO (solo si formato=Equipo) -->
-    <div id="inscEquipoBlock" style="display:none;">
-      <div style="margin-bottom:10px;"><label class="form-label">Nombre de fantasía del equipo *</label><input class="form-input" id="inscFantasia" placeholder="Ej: Los Imparables" autocomplete="off"></div>
-      <div style="margin-bottom:10px;"><label class="form-label">Logo del equipo</label><input class="form-input" id="inscLogo" type="file" accept="image/*" style="padding:8px;cursor:pointer;"></div>
-
-      <!-- JUGADOR 2 -->
-      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin:16px 0 12px;">Datos del jugador 2</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-        <div><label class="form-label">Nombre *</label><input class="form-input" id="inscJ2Nombre" placeholder="Nombre" autocomplete="off"></div>
-        <div><label class="form-label">Apellido *</label><input class="form-input" id="inscJ2Apellido" placeholder="Apellido" autocomplete="off"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-        <div><label class="form-label">Teléfono *</label><input class="form-input" id="inscJ2Telefono" placeholder="Ej: 3816000000" autocomplete="off"></div>
-        <div><label class="form-label">Email *</label><input class="form-input" id="inscJ2Email" type="email" placeholder="email@ejemplo.com" autocomplete="off"></div>
-      </div>
-    </div>
-
-    <div id="inscErr" style="display:none;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.3);color:var(--accent-red);padding:10px 14px;border-radius:3px;font-size:0.82rem;margin-bottom:12px;"></div>
-
-    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button style="flex:1;padding:12px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;border-radius:3px;cursor:pointer;" id="inscBtnCancel">Cancelar</button>
-      <button style="flex:2;padding:12px;background:transparent;border:1px solid var(--accent-green);color:var(--accent-green);font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;border-radius:3px;cursor:pointer;" id="inscBtnContinuar">Continuar →</button>
-    </div>
-  </div>
-</div>
 
 
 </div><!-- end appLayout -->
@@ -555,9 +514,11 @@
       <div><label class="form-label">Teléfono *</label><input class="form-input" id="inscTelefono" placeholder="Ej: 3816000000" autocomplete="off"></div>
       <div><label class="form-label">Email *</label><input class="form-input" id="inscEmail" type="email" placeholder="email@ejemplo.com" autocomplete="off"></div>
     </div>
-    <div id="inscEquipoBlock" style="display:none;">
+    <div id="inscEquipoBlock">
       <div style="margin-bottom:10px;"><label class="form-label">Nombre de fantasía del equipo *</label><input class="form-input" id="inscFantasia" placeholder="Ej: Los Imparables" autocomplete="off"></div>
       <div style="margin-bottom:10px;"><label class="form-label">Logo del equipo</label><input class="form-input" id="inscLogo" type="file" accept="image/*" style="padding:8px;cursor:pointer;"></div>
+    </div>
+    <div id="inscJ2Block" style="display:none;">
       <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin:16px 0 12px;">Datos del jugador 2</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div><label class="form-label">Nombre *</label><input class="form-input" id="inscJ2Nombre" placeholder="Nombre" autocomplete="off"></div>
@@ -875,6 +836,7 @@
     document.getElementById("inscModalSubtitle").textContent = tn.modalidad + " · " + tn.consola + " · " + (tn.costo ? "$" + tn.costo : "Gratis");
     document.getElementById("inscJ1Label").textContent = tn.formato === "Equipo" ? "Datos del jugador 1" : "Datos del jugador";
     document.getElementById("inscEquipoBlock").style.display = "block";
+    document.getElementById("inscJ2Block").style.display = tn.formato === "Equipo" ? "block" : "none";
     // Clear fields
     ["inscNombre","inscApellido","inscTelefono","inscEmail","inscFantasia","inscJ2Nombre","inscApellido2","inscJ2Telefono","inscJ2Email"].forEach(id => {
       const el = document.getElementById(id); if(el) el.value = "";
