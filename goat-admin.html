@@ -189,6 +189,17 @@
   </div>
 </div>
 
+<!-- INSCRIPTOS PANEL -->
+<div id="inscPanelOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:flex-start;justify-content:center;padding:40px 20px;box-sizing:border-box;overflow-y:auto;">
+  <div style="width:100%;max-width:620px;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+    <div style="padding:18px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-family:'Orbitron',monospace;font-size:0.82rem;font-weight:700;color:var(--accent-green);letter-spacing:0.1em;" id="inscPanelTitle">Inscriptos</div>
+      <button id="btnCloseInscPanel" style="background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:4px 12px;border-radius:3px;cursor:pointer;font-family:'Orbitron',monospace;font-size:0.65rem;letter-spacing:0.1em;">✕ Cerrar</button>
+    </div>
+    <div style="padding:20px;" id="inscPanelList"></div>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header id="mainHeader" style="display:none;">
   <div class="header-left">
@@ -521,79 +532,52 @@
   }
 
   window._verInscriptos = async (tnId, juego) => {
-    // Build a dedicated inscriptos panel inside the modal
+    const overlay = document.getElementById("inscPanelOverlay");
+    const listEl = document.getElementById("inscPanelList");
+    const titleEl = document.getElementById("inscPanelTitle");
+    overlay.style.display = "flex";
+    titleEl.textContent = "Cargando...";
+    listEl.innerHTML = "<div style='text-align:center;padding:24px;color:var(--text-muted);'>Cargando...</div>";
     const snap = await getDocs(collection(db, "inscripciones"));
     const docs = [];
     snap.forEach(d => { if(d.data().torneoId === tnId) docs.push({id: d.id, ...d.data()}); });
-
-    const renderInscList = () => {
-      let html = "<div style='font-family:Rajdhani,sans-serif;max-height:60vh;overflow-y:auto;'>";
-      html += "<div style='font-family:Orbitron,monospace;font-size:0.8rem;font-weight:700;color:var(--accent-green);margin-bottom:14px;letter-spacing:0.1em;'>🏆 " + juego + " — " + docs.length + " inscripto(s)</div>";
+    const renderInscPanel = () => {
+      titleEl.textContent = "🎮 " + juego + " — " + docs.length + " inscripto(s)";
+      listEl.innerHTML = "";
       if (!docs.length) {
-        html += "<div style='color:var(--text-muted);font-size:0.85rem;padding:20px 0;text-align:center;'>No hay inscriptos aún.</div>";
+        listEl.innerHTML = "<div style='text-align:center;padding:32px;color:var(--text-muted);font-size:0.85rem;'>No hay inscriptos aún.</div>";
+        return;
       }
       docs.forEach((ins, i) => {
-        html += "<div style='background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:10px;'>";
-        html += "<div style='display:flex;justify-content:space-between;align-items:flex-start;'>";
-        html += "<div style='flex:1;'>";
-        html += "<div style='font-weight:700;font-size:0.88rem;color:#fff;margin-bottom:4px;'>" + (i+1) + ". " + ins.nombre + " " + ins.apellido + (ins.fantasia ? " <span style=color:var(--accent-yellow);font-size:0.78rem;>— " + ins.fantasia + "</span>" : "") + "</div>";
-        html += "<div style='font-size:0.78rem;color:var(--text-secondary);margin-bottom:2px;'>📞 " + ins.telefono + " &nbsp;·&nbsp; ✉️ " + ins.email + "</div>";
-        if (ins.jugador2Nombre) html += "<div style='font-size:0.75rem;color:var(--text-muted);margin-top:4px;border-top:1px solid var(--border);padding-top:4px;'>J2: " + ins.jugador2Nombre + " " + ins.jugador2Apellido + " · " + ins.jugador2Email + "</div>";
-        html += "</div>";
-            html += '<button data-inscid="' + ins.id + '" data-tnid="' + tnId + '" class="btn-del-insc" style="margin-left:10px;padding:4px 10px;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.4);color:var(--accent-red);border-radius:3px;cursor:pointer;font-size:0.72rem;font-weight:700;flex-shrink:0;">🗑</button>';
-        html += "</div></div>";
+        const row = document.createElement("div");
+        row.style.cssText = "background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px;";
+        const info = document.createElement("div");
+        info.style.flex = "1";
+        info.innerHTML = "<div style='font-weight:700;font-size:0.9rem;color:#fff;margin-bottom:5px;'>" + (i+1) + ". " + ins.nombre + " " + ins.apellido + (ins.fantasia ? " <span style='color:var(--accent-yellow);font-size:0.78rem;'>— " + ins.fantasia + "</span>" : "") + "</div>"
+          + "<div style='font-size:0.78rem;color:var(--text-secondary);'>📞 " + ins.telefono + " &nbsp;·&nbsp; ✉️ " + ins.email + "</div>"
+          + (ins.jugador2Nombre ? "<div style='font-size:0.75rem;color:var(--text-muted);margin-top:5px;padding-top:5px;border-top:1px solid var(--border);'>J2: " + ins.jugador2Nombre + " " + ins.jugador2Apellido + " · " + ins.jugador2Email + "</div>" : "");
+        const delBtn = document.createElement("button");
+        delBtn.style.cssText = "padding:6px 14px;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.4);color:var(--accent-red);border-radius:4px;cursor:pointer;font-family:'Orbitron',monospace;font-size:0.65rem;font-weight:700;white-space:nowrap;flex-shrink:0;";
+        delBtn.textContent = "🗑 Eliminar";
+        delBtn.addEventListener("click", async () => {
+          if (!confirm("¿Eliminar este inscripto?")) return;
+          await deleteDoc(doc(db, "inscripciones", ins.id));
+          const tnRef = doc(db, "torneos", tnId);
+          const tnSnap = await getDoc(tnRef);
+          await setDoc(tnRef, {inscriptos: Math.max(0, (tnSnap.data().inscriptos||0) - 1)}, {merge:true});
+          docs.splice(i, 1);
+          renderInscPanel();
+          renderTorneos();
+        });
+        row.appendChild(info);
+        row.appendChild(delBtn);
+        listEl.appendChild(row);
       });
-      html += "</div>";
-      document.getElementById("modalMsg").innerHTML = html;
     };
-
-    renderInscList();
-    // Event delegation for delete buttons
-    setTimeout(() => {
-      document.getElementById("modalMsg").addEventListener("click", async function delHandler(e) {
-        const btn = e.target.closest(".btn-del-insc");
-        if (!btn) return;
-        if (!confirm("¿Eliminar este inscripto?")) return;
-        const inscId = btn.dataset.inscid;
-        const tnId2 = btn.dataset.tnid;
-        await deleteDoc(doc(db, "inscripciones", inscId));
-        const tnRef = doc(db, "torneos", tnId2);
-        const tnSnap = await getDoc(tnRef);
-        const actual = tnSnap.data().inscriptos || 0;
-        await setDoc(tnRef, {inscriptos: Math.max(0, actual - 1)}, {merge:true});
-        const idx2 = docs.findIndex(d => d.id === inscId);
-        if (idx2 !== -1) docs.splice(idx2, 1);
-        renderInscList();
-        renderTorneos();
-      });
-    }, 100);
-    document.getElementById("btnConfirmDel").style.display = "none";
-    document.getElementById("modalOverlay").classList.add("show");
-    document.getElementById("modalOverlay").addEventListener("click", function handler(e) {
-      if(e.target === document.getElementById("modalOverlay")) {
-        closeModal();
-        document.getElementById("btnConfirmDel").style.display = "";
-        document.getElementById("modalOverlay").removeEventListener("click", handler);
-      }
-    });
-
-    window._delInscripto = async (inscId, tnId2, juego2) => {
-      if (!confirm("¿Eliminar este inscripto?")) return;
-      await deleteDoc(doc(db, "inscripciones", inscId));
-      // Update count
-      const tnRef = doc(db, "torneos", tnId2);
-      const tnSnap = await getDoc(tnRef);
-      const actual = tnSnap.data().inscriptos || 0;
-      await setDoc(tnRef, {inscriptos: Math.max(0, actual - 1)}, {merge:true});
-      // Remove from local array and re-render
-      const idx = docs.findIndex(d => d.id === inscId);
-      if (idx !== -1) docs.splice(idx, 1);
-      renderInscList();
-      renderTorneos();
-    };
+    renderInscPanel();
   };
 
-  window._changeTnEstado = async (id, estado) => {
+    window._changeTnEstado = async (id, estado) => {
     await setDoc(doc(db,"torneos",id), {estado}, {merge:true});
     renderTorneos();
   };
@@ -943,6 +927,9 @@
   document.getElementById("tab-btn-beneficios").addEventListener("click", () => switchTab("beneficios"));
   document.getElementById("btnAddCode").addEventListener("click", addCode);
   document.getElementById("btnAddTorneo").addEventListener("click", addTorneo);
+  document.getElementById("btnCloseInscPanel").addEventListener("click", () => {
+    document.getElementById("inscPanelOverlay").style.display = "none";
+  });
   document.getElementById("tab-btn-torneos").addEventListener("click", () => switchTab("torneos"));
   document.querySelectorAll(".tn-filter").forEach(btn => {
     btn.addEventListener("click", () => {
