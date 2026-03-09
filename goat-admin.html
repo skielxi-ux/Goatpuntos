@@ -927,6 +927,24 @@
   }
 
   // INIT
+  function buildEmojiGrid() {
+    const emojis = ["🎮","🕹️","🏆","⚡","🔥","💎","🎯","🃏","🎲","👾","🤖","🦁","🐉","🦅","💀","⚔️","🛡️","🚀","💥","🌟"];
+    const grid = document.getElementById("emojiGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    emojis.forEach(e => {
+      const btn = document.createElement("div");
+      btn.className = "emoji-opt" + (e === selectedEmoji ? " selected" : "");
+      btn.textContent = e;
+      btn.addEventListener("click", () => {
+        selectedEmoji = e;
+        grid.querySelectorAll(".emoji-opt").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      grid.appendChild(btn);
+    });
+  }
+
   async function init() { buildEmojiGrid(); await renderDashboard(); }
 
   // EVENT LISTENERS
