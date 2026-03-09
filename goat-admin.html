@@ -511,7 +511,7 @@
         html += "<div style='font-size:0.78rem;color:var(--text-secondary);margin-bottom:2px;'>📞 " + ins.telefono + " &nbsp;·&nbsp; ✉️ " + ins.email + "</div>";
         if (ins.jugador2Nombre) html += "<div style='font-size:0.75rem;color:var(--text-muted);margin-top:4px;border-top:1px solid var(--border);padding-top:4px;'>J2: " + ins.jugador2Nombre + " " + ins.jugador2Apellido + " · " + ins.jugador2Email + "</div>";
         html += "</div>";
-        html += "<button onclick="window._delInscripto('" + ins.id + "','" + tnId + "','" + juego + "')" style='margin-left:10px;padding:4px 10px;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.4);color:var(--accent-red);border-radius:3px;cursor:pointer;font-size:0.72rem;font-weight:700;flex-shrink:0;'>🗑 Eliminar</button>";
+            html += '<button data-inscid="' + ins.id + '" data-tnid="' + tnId + '" class="btn-del-insc" style="margin-left:10px;padding:4px 10px;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.4);color:var(--accent-red);border-radius:3px;cursor:pointer;font-size:0.72rem;font-weight:700;flex-shrink:0;">🗑</button>';
         html += "</div></div>";
       });
       html += "</div>";
@@ -519,6 +519,25 @@
     };
 
     renderInscList();
+    // Event delegation for delete buttons
+    setTimeout(() => {
+      document.getElementById("modalMsg").addEventListener("click", async function delHandler(e) {
+        const btn = e.target.closest(".btn-del-insc");
+        if (!btn) return;
+        if (!confirm("¿Eliminar este inscripto?")) return;
+        const inscId = btn.dataset.inscid;
+        const tnId2 = btn.dataset.tnid;
+        await deleteDoc(doc(db, "inscripciones", inscId));
+        const tnRef = doc(db, "torneos", tnId2);
+        const tnSnap = await getDoc(tnRef);
+        const actual = tnSnap.data().inscriptos || 0;
+        await setDoc(tnRef, {inscriptos: Math.max(0, actual - 1)}, {merge:true});
+        const idx2 = docs.findIndex(d => d.id === inscId);
+        if (idx2 !== -1) docs.splice(idx2, 1);
+        renderInscList();
+        renderTorneos();
+      });
+    }, 100);
     document.getElementById("btnConfirmDel").style.display = "none";
     document.getElementById("modalOverlay").classList.add("show");
     document.getElementById("modalOverlay").addEventListener("click", function handler(e) {
