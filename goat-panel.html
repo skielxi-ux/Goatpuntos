@@ -384,6 +384,10 @@
         <span class="nav-icon">🎮</span>
         <span class="nav-label">Torneos</span>
       </div>
+      <div class="nav-item" data-panel="misinscripciones">
+        <span class="nav-icon">🏅</span>
+        <span class="nav-label">Mis Inscripciones</span>
+      </div>
     </aside>
 
     <!-- MAIN PANELS -->
@@ -493,6 +497,18 @@
         </div>
       </div>
 
+      <div class="content-panel" id="panel-misinscripciones">
+        <div class="panel">
+          <div class="panel-header">
+            <span>🏅</span>
+            <div class="panel-title">Mis Inscripciones</div>
+          </div>
+          <div class="panel-body" style="padding:16px;" id="misInscList">
+            <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:0.82rem;">Cargando...</div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- end main-content -->
   </div><!-- end app-body -->
 <!-- INSCRIPCION MODAL -->
@@ -587,6 +603,7 @@
       document.getElementById("panel-" + item.dataset.panel).classList.add("active");
       if (item.dataset.panel === "disponibles") renderDisponibles();
       if (item.dataset.panel === "torneos") renderTorneosClient();
+      if (item.dataset.panel === "misinscripciones") renderMisInscripciones();
     });
   });
 
@@ -769,6 +786,50 @@
       await loadUserData();
     } catch(e) { console.error(e); showAlert("err","Error de conexión."); }
     finally { btn.disabled=false; btn.querySelector("span").textContent="⚡  Canjear ahora"; }
+  }
+
+  // ── MIS INSCRIPCIONES ───────────────────────────────
+  async function renderMisInscripciones() {
+    const el = document.getElementById("misInscList");
+    el.innerHTML = "<div style='text-align:center;padding:32px;color:var(--text-muted);font-size:0.82rem;'>Cargando...</div>";
+    const snap = await getDocs(collection(db, "inscripciones"));
+    const lista = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if (data.email === state.email) lista.push({id: d.id, ...data});
+    });
+    if (!lista.length) {
+      el.innerHTML = "<div style='text-align:center;padding:32px;color:var(--text-muted);font-size:0.82rem;text-transform:uppercase;'>No estás inscripto en ningún torneo</div>";
+      return;
+    }
+    lista.sort((a,b) => new Date(b.fechaInscripcion) - new Date(a.fechaInscripcion));
+    el.innerHTML = "";
+    for (const ins of lista) {
+      // Get torneo info
+      let torneoInfo = null;
+      try {
+        const tnSnap = await getDoc(doc(db, "torneos", ins.torneoId));
+        if (tnSnap.exists()) torneoInfo = tnSnap.data();
+      } catch(e) {}
+      const card = document.createElement("div");
+      card.style.cssText = "background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px;";
+      const estadoBadge = torneoInfo ? ({
+        activo: "<span style='background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:var(--accent-green);padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;'>🟢 ACTIVO</span>",
+        proximo: "<span style='background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.3);color:var(--accent-blue);padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;'>🔵 PRÓXIMO</span>",
+        finalizado: "<span style='background:rgba(100,100,100,0.1);border:1px solid rgba(100,100,100,0.3);color:var(--text-muted);padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;'>⚫ FINALIZADO</span>"
+      }[torneoInfo.estado] || "") : "";
+      const fecha = torneoInfo?.fecha ? new Date(torneoInfo.fecha + "T00:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}) : "—";
+      const logoHtml = ins.logoUrl ? "<img src='" + ins.logoUrl + "' style='width:32px;height:32px;border-radius:4px;object-fit:cover;border:1px solid var(--border);margin-right:8px;vertical-align:middle;'>" : "";
+      card.innerHTML = "<div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;'>"
+        + "<div style='font-family:Orbitron,monospace;font-size:0.85rem;font-weight:700;color:#fff;'>🎮 " + ins.torneoJuego + "</div>"
+        + estadoBadge + "</div>"
+        + "<div style='font-size:0.8rem;color:var(--text-secondary);margin-bottom:6px;'>📅 " + fecha + (torneoInfo?.modalidad ? " &nbsp;·&nbsp; " + torneoInfo.modalidad : "") + (torneoInfo?.consola ? " &nbsp;·&nbsp; " + torneoInfo.consola : "") + "</div>"
+        + "<div style='border-top:1px solid var(--border);padding-top:10px;margin-top:4px;font-size:0.78rem;color:var(--text-secondary);'>"
+        + logoHtml + "<strong style='color:#fff;'>" + ins.nombre + " " + ins.apellido + "</strong>"
+        + (ins.fantasia ? " <span style='color:var(--accent-yellow);'>⚔️ " + ins.fantasia + "</span>" : "")
+        + "</div>";
+      el.appendChild(card);
+    }
   }
 
   // ── TORNEOS ──────────────────────────────────────────
