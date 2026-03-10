@@ -356,19 +356,20 @@
 
 </div>
 
-  <!-- HALL OF FAME PANEL -->
-  <div class="panel" id="section-hallfame" style="display:none;">
-    <div class="panel-header"><div class="panel-title">👑 Hall of Fame</div></div>
-    <div class="panel-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:20px;">
-        <div><label class="form-label">Nombre</label><input class="form-input" id="hofNombre" placeholder="Nombre del ganador"></div>
-        <div><label class="form-label">Torneo ganado</label><input class="form-input" id="hofTorneo" placeholder="Nombre del torneo"></div>
-        <div><label class="form-label">Puntos HoF</label><input class="form-input" id="hofPuntos" type="number" value="20" min="1"></div>
-        <div style="display:flex;align-items:flex-end;"><button class="btn btn-primary" id="btnAddHof" style="width:100%;"><span>➕ Agregar ganador</span></button></div>
-      </div>
-      <div class="panel-header" style="margin-top:8px;"><div class="panel-title">Ranking actual</div></div>
-      <div id="hofTableWrap" style="padding:8px 0;">
-        <table class="table" style="width:100%;"><thead><tr><th>#</th><th>Nombre</th><th>Torneo</th><th>Puntos HoF</th><th></th></tr></thead><tbody id="hofTableBody"><tr class="empty-row"><td colspan="5">Cargando...</td></tr></tbody></table>
+  <div class="tab-content" id="tab-hallfame">
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">👑 Hall of Fame</div></div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:20px;">
+          <div><label class="form-label">Nombre</label><input class="form-input" id="hofNombre" placeholder="Nombre del ganador"></div>
+          <div><label class="form-label">Torneo ganado</label><input class="form-input" id="hofTorneo" placeholder="Nombre del torneo"></div>
+          <div><label class="form-label">Puntos HoF</label><input class="form-input" id="hofPuntos" type="number" value="20" min="1"></div>
+          <div style="display:flex;align-items:flex-end;"><button class="btn btn-primary" id="btnAddHof" style="width:100%;"><span>➕ Agregar ganador</span></button></div>
+        </div>
+        <div class="panel-header" style="margin-top:8px;"><div class="panel-title">Ranking actual</div></div>
+        <div id="hofTableWrap" style="padding:8px 0;">
+          <table class="table" style="width:100%;"><thead><tr><th>#</th><th>Nombre</th><th>Torneo</th><th>Puntos HoF</th><th></th></tr></thead><tbody id="hofTableBody"><tr class="empty-row"><td colspan="5">Cargando...</td></tr></tbody></table>
+        </div>
       </div>
     </div>
   </div>
@@ -429,9 +430,7 @@
     const names = ["dashboard","codigos","historial","beneficios","torneos","hallfame"];
     document.querySelectorAll(".tab").forEach((t,i) => t.classList.toggle("active", names[i] === name));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-    if (name !== "hallfame") document.getElementById("tab-" + name).classList.add("active");
-    const hofSection = document.getElementById("section-hallfame");
-    if (hofSection) hofSection.style.display = name === "hallfame" ? "" : "none";
+    document.getElementById("tab-" + name).classList.add("active");
     if (name === "dashboard") renderDashboard();
     if (name === "codigos") renderCodesTable();
     if (name === "historial") renderHistTable();
