@@ -1004,24 +1004,24 @@
   async function init() { buildEmojiGrid(); await renderDashboard(); }
 
   // EVENT LISTENERS
-  document.getElementById("btnLogin").addEventListener("click", doLogin);
-  document.getElementById("btnLogout").addEventListener("click", logout);
-  document.getElementById("toggleBtn").addEventListener("click", togglePass);
-  document.getElementById("loginPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
-  document.getElementById("btnCancelModal").addEventListener("click", closeModal);
-  document.getElementById("modalOverlay").addEventListener("click", e => { if (e.target === document.getElementById("modalOverlay")) closeModal(); });
-  document.getElementById("tab-btn-dashboard").addEventListener("click", () => switchTab("dashboard"));
-  document.getElementById("tab-btn-codigos").addEventListener("click", () => switchTab("codigos"));
-  document.getElementById("tab-btn-historial").addEventListener("click", () => switchTab("historial"));
-  document.getElementById("tab-btn-beneficios").addEventListener("click", () => switchTab("beneficios"));
-  document.getElementById("btnAddCode").addEventListener("click", addCode);
-  document.getElementById("btnAddTorneo").addEventListener("click", addTorneo);
-  document.getElementById("btnCloseInscPanel").addEventListener("click", () => {
+  document.getElementById("btnLogin")?.addEventListener("click", doLogin);
+  document.getElementById("btnLogout")?.addEventListener("click", logout);
+  document.getElementById("toggleBtn")?.addEventListener("click", togglePass);
+  document.getElementById("loginPass")?.addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+  document.getElementById("btnCancelModal")?.addEventListener("click", closeModal);
+  document.getElementById("modalOverlay")?.addEventListener("click", e => { if (e.target === document.getElementById("modalOverlay")) closeModal(); });
+  document.getElementById("tab-btn-dashboard")?.addEventListener("click", () => switchTab("dashboard"));
+  document.getElementById("tab-btn-codigos")?.addEventListener("click", () => switchTab("codigos"));
+  document.getElementById("tab-btn-historial")?.addEventListener("click", () => switchTab("historial"));
+  document.getElementById("tab-btn-beneficios")?.addEventListener("click", () => switchTab("beneficios"));
+  document.getElementById("btnAddCode")?.addEventListener("click", addCode);
+  document.getElementById("btnAddTorneo")?.addEventListener("click", addTorneo);
+  document.getElementById("btnCloseInscPanel")?.addEventListener("click", () => {
     document.getElementById("inscPanelOverlay").style.display = "none";
   });
-  document.getElementById("tab-btn-torneos").addEventListener("click", () => switchTab("torneos"));
-  document.getElementById("tab-btn-hallfame").addEventListener("click", () => switchTab("hallfame"));
-  document.getElementById("tab-btn-faqs").addEventListener("click", () => switchTab("faqs"));
+  document.getElementById("tab-btn-torneos")?.addEventListener("click", () => switchTab("torneos"));
+  document.getElementById("tab-btn-hallfame")?.addEventListener("click", () => switchTab("hallfame"));
+  document.getElementById("tab-btn-faqs")?.addEventListener("click", () => switchTab("faqs"));
   document.querySelectorAll(".tn-filter").forEach(btn => {
     btn.addEventListener("click", () => {
       tnFilter = btn.dataset.filter;
@@ -1034,15 +1034,15 @@
       renderTorneos();
     });
   });
-  document.getElementById("btnExportCodigos").addEventListener("click", () => exportCSV("codigos"));
-  document.getElementById("btnExportHistorial").addEventListener("click", () => exportCSV("historial"));
-  document.getElementById("btnExportBeneficios").addEventListener("click", () => exportCSV("beneficios"));
-  document.getElementById("btnAddBeneficio").addEventListener("click", addBeneficio);
-  document.getElementById("btnBuscarCliente").addEventListener("click", buscarCliente);
-  document.getElementById("btnAplicarBeneficio").addEventListener("click", aplicarBeneficio);
-  document.getElementById("searchCode").addEventListener("input", renderCodesTable);
-  document.getElementById("searchHist").addEventListener("input", renderHistTable);
-  document.getElementById("searchClientEmail").addEventListener("keydown", e => { if (e.key === "Enter") buscarCliente(); });
+  document.getElementById("btnExportCodigos")?.addEventListener("click", () => exportCSV("codigos"));
+  document.getElementById("btnExportHistorial")?.addEventListener("click", () => exportCSV("historial"));
+  document.getElementById("btnExportBeneficios")?.addEventListener("click", () => exportCSV("beneficios"));
+  document.getElementById("btnAddBeneficio")?.addEventListener("click", addBeneficio);
+  document.getElementById("btnBuscarCliente")?.addEventListener("click", buscarCliente);
+  document.getElementById("btnAplicarBeneficio")?.addEventListener("click", aplicarBeneficio);
+  document.getElementById("searchCode")?.addEventListener("input", renderCodesTable);
+  document.getElementById("searchHist")?.addEventListener("input", renderHistTable);
+  document.getElementById("searchClientEmail")?.addEventListener("keydown", e => { if (e.key === "Enter") buscarCliente(); });
   // ── HALL OF FAME ─────────────────────────────────────
   async function renderHofTable() {
     const tbody = document.getElementById("hofTableBody");
@@ -1070,7 +1070,7 @@
     });
   }
 
-  document.getElementById("btnAddHof").addEventListener("click", async () => {
+  document.getElementById("btnAddHof")?.addEventListener("click", async () => {
     const nombre = document.getElementById("hofNombre").value.trim();
     const torneo = document.getElementById("hofTorneo").value.trim();
     const puntos = parseInt(document.getElementById("hofPuntos").value) || 20;
@@ -1137,7 +1137,7 @@
     });
   }
 
-  document.getElementById("btnAddFaq").addEventListener("click", async () => {
+  document.getElementById("btnAddFaq")?.addEventListener("click", async () => {
     const pregunta = document.getElementById("faqPregunta").value.trim();
     const respuesta = document.getElementById("faqRespuesta").value.trim();
     const orden = parseInt(document.getElementById("faqOrden").value) || 1;
