@@ -372,6 +372,8 @@
         </div>
       </div>
     </div>
+  </div>
+
   <div class="tab-content" id="tab-faqs">
     <div class="panel">
       <div class="panel-header"><div class="panel-title">❓ FAQs — Agregar pregunta</div></div>
@@ -386,8 +388,8 @@
         <table class="table" style="width:100%;margin-top:8px;"><thead><tr><th>#</th><th>Pregunta</th><th>Respuesta</th><th>Acciones</th></tr></thead><tbody id="faqTableBody"><tr class="empty-row"><td colspan="5">Cargando...</td></tr></tbody></table>
       </div>
     </div>
-  </div>
 
+</div>
 </div>
 
 <script type="module">
@@ -443,15 +445,21 @@
 
   // TABS
   function switchTab(name) {
-    const names = ["dashboard","codigos","historial","beneficios","torneos","hallfame","faqs"];
     // Update tab button styles
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     const activeBtn = document.getElementById("tab-btn-" + name);
     if (activeBtn) activeBtn.classList.add("active");
-    // Show correct panel
-    document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+    // Hide all panels - remove active class AND override display
+    document.querySelectorAll(".tab-content").forEach(c => {
+      c.classList.remove("active");
+      c.style.display = "none";
+    });
+    // Show target panel
     const panel = document.getElementById("tab-" + name);
-    if (panel) panel.style.display = "block";
+    if (panel) {
+      panel.classList.add("active");
+      panel.style.display = "block";
+    }
     // Render content
     if (name === "dashboard") renderDashboard();
     if (name === "codigos") renderCodesTable();
@@ -1112,7 +1120,7 @@
     const snap = await getDocs(collection(db, "faqs"));
     const lista = [];
     snap.forEach(d => lista.push({id: d.id, ...d.data()}));
-    lista.sort((a,b) => (a.orden||0) - (b.orden||0));
+    lista.sort((a,b) => (parseInt(a.orden)||0) - (parseInt(b.orden)||0));
     if (!lista.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='5'>No hay FAQs cargadas</td></tr>"; return; }
     tbody.innerHTML = "";
     lista.forEach(faq => {
