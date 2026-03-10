@@ -827,10 +827,16 @@
         + "<div style='border-top:1px solid var(--border);padding-top:10px;margin-top:4px;font-size:0.78rem;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center;'>"
         + "<div>" + logoHtml + "<strong style='color:#fff;'>" + ins.nombre + " " + ins.apellido + "</strong>"
         + (ins.fantasia ? " <span style='color:var(--accent-yellow);'>⚔️ " + ins.fantasia + "</span>" : "") + "</div>"
-        + "<button data-insid='" + ins.id + "' class='btn-del-insc-client' style='padding:5px 14px;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.4);color:var(--accent-red);border-radius:4px;cursor:pointer;font-size:0.7rem;font-weight:700;'>🗑 Eliminar</button>"
         + "</div>";
 
-      card.querySelector(".btn-del-insc-client").addEventListener("click", async () => {
+      // Add delete button separately via createElement
+      const bottomRow = card.querySelector("div:last-child");
+      const delBtn = document.createElement("button");
+      delBtn.style.cssText = "padding:5px 14px;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.4);color:#ff4060;border-radius:4px;cursor:pointer;font-size:0.7rem;font-weight:700;";
+      delBtn.textContent = "🗑 Eliminar";
+      bottomRow.appendChild(delBtn);
+
+      delBtn.addEventListener("click", async () => {
         if (!confirm("¿Eliminar tu inscripción al torneo " + ins.torneoJuego + "?")) return;
         await deleteDoc(doc(db, "inscripciones", ins.id));
         if (ins.torneoId) {
