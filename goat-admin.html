@@ -55,6 +55,7 @@
   .main { position:relative; z-index:5; max-width:1200px; margin:0 auto; padding:32px 24px 60px; }
   .tab-content { display:none; }
   .tab-content.active { display:block; }
+  #tab-dashboard { display:block; }
 
   /* PANEL */
   .panel { background:var(--bg-panel); border:1px solid var(--border); border-radius:4px; overflow:hidden; position:relative; margin-bottom:24px; }
@@ -443,9 +444,15 @@
   // TABS
   function switchTab(name) {
     const names = ["dashboard","codigos","historial","beneficios","torneos","hallfame","faqs"];
-    document.querySelectorAll(".tab").forEach((t,i) => t.classList.toggle("active", names[i] === name));
-    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-    document.getElementById("tab-" + name).classList.add("active");
+    // Update tab button styles
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    const activeBtn = document.getElementById("tab-btn-" + name);
+    if (activeBtn) activeBtn.classList.add("active");
+    // Show correct panel
+    document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+    const panel = document.getElementById("tab-" + name);
+    if (panel) panel.style.display = "block";
+    // Render content
     if (name === "dashboard") renderDashboard();
     if (name === "codigos") renderCodesTable();
     if (name === "historial") renderHistTable();
