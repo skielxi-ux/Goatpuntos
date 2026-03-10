@@ -833,7 +833,7 @@
       el.innerHTML = "<div style='text-align:center;padding:48px 32px;color:var(--text-muted);font-size:0.82rem;text-transform:uppercase;'>No hay preguntas frecuentes disponibles</div>";
       return;
     }
-    lista.sort((a,b) => (a.orden||0) - (b.orden||0));
+    lista.sort((a,b) => (parseInt(a.orden)||0) - (parseInt(b.orden)||0));
     el.innerHTML = "";
     lista.forEach((faq, i) => {
       const item = document.createElement("div");
