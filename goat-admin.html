@@ -1004,6 +1004,7 @@
     document.getElementById("inscPanelOverlay").style.display = "none";
   });
   document.getElementById("tab-btn-torneos").addEventListener("click", () => switchTab("torneos"));
+  document.getElementById("tab-btn-hallfame").addEventListener("click", () => switchTab("hallfame"));
   document.querySelectorAll(".tn-filter").forEach(btn => {
     btn.addEventListener("click", () => {
       tnFilter = btn.dataset.filter;
