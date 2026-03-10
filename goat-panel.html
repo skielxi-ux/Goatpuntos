@@ -336,8 +336,8 @@
   </div>
 
   <!-- HERO -->
-  <div class="hero-wrap" style="display:flex;justify-content:center;padding:16px 24px 0;background:transparent;">
-    <img src="https://raw.githubusercontent.com/skielxi-ux/Goatpuntos/main/hero.png" alt="GOAT Esports Heroes" style="max-width:700px;width:100%;border-radius:12px;display:block;">
+  <div class="hero-wrap" style="width:100%;padding:0;background:transparent;overflow:hidden;">
+    <img src="https://raw.githubusercontent.com/skielxi-ux/Goatpuntos/main/hero.png" alt="GOAT Esports Heroes" style="width:100%;height:220px;object-fit:cover;object-position:center;display:block;">
   </div>
 
   <!-- BODY -->
@@ -820,14 +820,37 @@
       }[torneoInfo.estado] || "") : "";
       const fecha = torneoInfo?.fecha ? new Date(torneoInfo.fecha + "T00:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}) : "—";
       const logoHtml = ins.logoUrl ? "<img src='" + ins.logoUrl + "' style='width:32px;height:32px;border-radius:4px;object-fit:cover;border:1px solid var(--border);margin-right:8px;vertical-align:middle;'>" : "";
+      // Check if torneo date has passed
+      const torneoFechaPasada = torneoInfo?.fecha ? new Date(torneoInfo.fecha + "T23:59:59") < new Date() : false;
+
       card.innerHTML = "<div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;'>"
         + "<div style='font-family:Orbitron,monospace;font-size:0.85rem;font-weight:700;color:#fff;'>🎮 " + ins.torneoJuego + "</div>"
         + estadoBadge + "</div>"
         + "<div style='font-size:0.8rem;color:var(--text-secondary);margin-bottom:6px;'>📅 " + fecha + (torneoInfo?.modalidad ? " &nbsp;·&nbsp; " + torneoInfo.modalidad : "") + (torneoInfo?.consola ? " &nbsp;·&nbsp; " + torneoInfo.consola : "") + "</div>"
-        + "<div style='border-top:1px solid var(--border);padding-top:10px;margin-top:4px;font-size:0.78rem;color:var(--text-secondary);'>"
-        + logoHtml + "<strong style='color:#fff;'>" + ins.nombre + " " + ins.apellido + "</strong>"
-        + (ins.fantasia ? " <span style='color:var(--accent-yellow);'>⚔️ " + ins.fantasia + "</span>" : "")
+        + "<div style='border-top:1px solid var(--border);padding-top:10px;margin-top:4px;font-size:0.78rem;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center;'>"
+        + "<div>" + logoHtml + "<strong style='color:#fff;'>" + ins.nombre + " " + ins.apellido + "</strong>"
+        + (ins.fantasia ? " <span style='color:var(--accent-yellow);'>⚔️ " + ins.fantasia + "</span>" : "") + "</div>"
+        + (torneoFechaPasada ? "<button data-insid='" + ins.id + "' class='btn-del-insc-client' style='padding:5px 14px;background:rgba(255,64,96,0.1);border:1px solid rgba(255,64,96,0.4);color:var(--accent-red);border-radius:4px;cursor:pointer;font-size:0.7rem;font-weight:700;'>🗑 Eliminar</button>" : "")
         + "</div>";
+
+      // Add delete listener if button exists
+      if (torneoFechaPasada) {
+        const delBtn = card.querySelector(".btn-del-insc-client");
+        delBtn.addEventListener("click", async () => {
+          if (!confirm("¿Eliminar tu inscripción al torneo " + ins.torneoJuego + "?")) return;
+          await deleteDoc(doc(db, "inscripciones", ins.id));
+          // Decrease inscriptos count
+          if (ins.torneoId) {
+            const tnRef = doc(db, "torneos", ins.torneoId);
+            const tnSnap = await getDoc(tnRef);
+            if (tnSnap.exists()) {
+              await setDoc(tnRef, {inscriptos: Math.max(0, (tnSnap.data().inscriptos||0) - 1)}, {merge:true});
+            }
+          }
+          renderMisInscripciones();
+        });
+      }
+
       el.appendChild(card);
     }
   }
