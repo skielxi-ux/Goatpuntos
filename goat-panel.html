@@ -388,6 +388,10 @@
         <span class="nav-icon">🏅</span>
         <span class="nav-label">Mis Inscripciones</span>
       </div>
+      <div class="nav-item" data-panel="hallfame">
+        <span class="nav-icon">👑</span>
+        <span class="nav-label">Hall of Fame</span>
+      </div>
     </aside>
 
     <!-- MAIN PANELS -->
@@ -509,6 +513,18 @@
         </div>
       </div>
 
+      <div class="content-panel" id="panel-hallfame">
+        <div class="panel">
+          <div class="panel-header">
+            <span>👑</span>
+            <div class="panel-title">Hall of Fame</div>
+          </div>
+          <div class="panel-body" style="padding:0;" id="hofList">
+            <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:0.82rem;">Cargando...</div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- end main-content -->
   </div><!-- end app-body -->
 <!-- INSCRIPCION MODAL -->
@@ -604,6 +620,7 @@
       if (item.dataset.panel === "disponibles") renderDisponibles();
       if (item.dataset.panel === "torneos") renderTorneosClient();
       if (item.dataset.panel === "misinscripciones") renderMisInscripciones();
+      if (item.dataset.panel === "hallfame") renderHallOfFame();
     });
   });
 
@@ -786,6 +803,41 @@
       await loadUserData();
     } catch(e) { console.error(e); showAlert("err","Error de conexión."); }
     finally { btn.disabled=false; btn.querySelector("span").textContent="⚡  Canjear ahora"; }
+  }
+
+  // ── HALL OF FAME ─────────────────────────────────────
+  async function renderHallOfFame() {
+    const el = document.getElementById("hofList");
+    el.innerHTML = "<div style='text-align:center;padding:32px;color:var(--text-muted);font-size:0.82rem;'>Cargando...</div>";
+    const snap = await getDocs(collection(db, "hall_of_fame"));
+    const lista = [];
+    snap.forEach(d => lista.push({id: d.id, ...d.data()}));
+    if (!lista.length) {
+      el.innerHTML = "<div style='text-align:center;padding:48px 32px;color:var(--text-muted);font-size:0.82rem;text-transform:uppercase;'>Aún no hay ganadores registrados</div>";
+      return;
+    }
+    lista.sort((a,b) => (b.puntos||0) - (a.puntos||0));
+    el.innerHTML = "";
+    const medals = ["🥇","🥈","🥉"];
+    lista.forEach((g, i) => {
+      const row = document.createElement("div");
+      const isTop = i < 3;
+      row.style.cssText = "display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);" + (isTop ? "background:rgba(255,215,0,0.03);" : "");
+      const pos = document.createElement("div");
+      pos.style.cssText = "font-family:Orbitron,monospace;font-size:0.9rem;font-weight:700;min-width:32px;text-align:center;";
+      pos.textContent = medals[i] || "#" + (i+1);
+      const info = document.createElement("div");
+      info.style.cssText = "flex:1;";
+      info.innerHTML = "<div style='font-size:0.92rem;font-weight:700;color:#fff;'>" + g.nombre + "</div>"
+        + "<div style='font-size:0.75rem;color:var(--text-secondary);margin-top:2px;'>🎮 " + (g.torneo || "—") + "</div>";
+      const pts = document.createElement("div");
+      pts.style.cssText = "font-family:Orbitron,monospace;font-size:0.85rem;font-weight:700;color:var(--accent-yellow);white-space:nowrap;";
+      pts.textContent = (g.puntos || 0) + " pts";
+      row.appendChild(pos);
+      row.appendChild(info);
+      row.appendChild(pts);
+      el.appendChild(row);
+    });
   }
 
   // ── MIS INSCRIPCIONES ───────────────────────────────
