@@ -379,10 +379,10 @@
           <div><label class="form-label">Pregunta</label><input class="form-input" id="faqPregunta" placeholder="¿Cómo canjeo mi tarjeta?"></div>
           <div><label class="form-label">Respuesta</label><input class="form-input" id="faqRespuesta" placeholder="Ingresá el código en la sección..."></div>
           <div><label class="form-label">Orden</label><input class="form-input" id="faqOrden" type="number" value="1" min="1" style="width:70px;"></div>
-          <div><button class="btn btn-primary" id="btnAddFaq"><span>➕ Agregar</span></button></div>
+          <div><button class="btn" id="btnAddFaq" style="background:var(--accent-green);color:#000;border-color:var(--accent-green);font-weight:700;"><span>➕ Agregar</span></button></div>
         </div>
         <div class="panel-header" style="margin-top:8px;"><div class="panel-title">FAQs publicadas</div></div>
-        <table class="table" style="width:100%;margin-top:8px;"><thead><tr><th>#</th><th>Pregunta</th><th>Respuesta</th><th></th></tr></thead><tbody id="faqTableBody"><tr class="empty-row"><td colspan="4">Cargando...</td></tr></tbody></table>
+        <table class="table" style="width:100%;margin-top:8px;"><thead><tr><th>#</th><th>Pregunta</th><th>Respuesta</th><th>Acciones</th></tr></thead><tbody id="faqTableBody"><tr class="empty-row"><td colspan="5">Cargando...</td></tr></tbody></table>
       </div>
     </div>
   </div>
@@ -1097,22 +1097,38 @@
   });
 
   // ── FAQS ─────────────────────────────────────────────
+  let editingFaqId = null;
+
   async function renderFaqTable() {
     const tbody = document.getElementById("faqTableBody");
-    tbody.innerHTML = "<tr class='empty-row'><td colspan='4'>Cargando...</td></tr>";
+    tbody.innerHTML = "<tr class='empty-row'><td colspan='5'>Cargando...</td></tr>";
     const snap = await getDocs(collection(db, "faqs"));
     const lista = [];
     snap.forEach(d => lista.push({id: d.id, ...d.data()}));
     lista.sort((a,b) => (a.orden||0) - (b.orden||0));
-    if (!lista.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='4'>No hay FAQs cargadas</td></tr>"; return; }
+    if (!lista.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='5'>No hay FAQs cargadas</td></tr>"; return; }
     tbody.innerHTML = "";
     lista.forEach(faq => {
       const tr = document.createElement("tr");
       tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.8rem;'>" + (faq.orden||"—") + "</td>"
-        + "<td style='font-weight:700;max-width:300px;'>" + faq.pregunta + "</td>"
-        + "<td style='color:var(--text-secondary);max-width:400px;font-size:0.82rem;'>" + faq.respuesta + "</td>"
-        + "<td><button class='btn btn-danger' style='font-size:0.65rem;padding:4px 10px;' id='del-faq-" + faq.id + "'><span>Eliminar</span></button></td>";
+        + "<td style='font-weight:700;max-width:250px;'>" + faq.pregunta + "</td>"
+        + "<td style='color:var(--text-secondary);max-width:350px;font-size:0.82rem;'>" + faq.respuesta + "</td>"
+        + "<td style='display:flex;gap:6px;'>"
+        + "<button class='btn' id='edit-faq-" + faq.id + "' style='font-size:0.65rem;padding:4px 10px;border-color:var(--accent-blue);color:var(--accent-blue);'><span>✏️ Editar</span></button>"
+        + "<button class='btn btn-danger' id='del-faq-" + faq.id + "' style='font-size:0.65rem;padding:4px 10px;'><span>Eliminar</span></button>"
+        + "</td>";
       tbody.appendChild(tr);
+      document.getElementById("edit-faq-"+faq.id).addEventListener("click", () => {
+        editingFaqId = faq.id;
+        document.getElementById("faqPregunta").value = faq.pregunta;
+        document.getElementById("faqRespuesta").value = faq.respuesta;
+        document.getElementById("faqOrden").value = faq.orden || 1;
+        document.getElementById("btnAddFaq").querySelector("span").textContent = "💾 Guardar cambios";
+        document.getElementById("btnAddFaq").style.borderColor = "var(--accent-yellow)";
+        document.getElementById("btnAddFaq").style.color = "var(--accent-yellow)";
+        document.getElementById("faqPregunta").focus();
+        document.getElementById("faqPregunta").scrollIntoView({behavior:"smooth"});
+      });
       document.getElementById("del-faq-"+faq.id).addEventListener("click", async () => {
         if (!confirm("¿Eliminar esta FAQ?")) return;
         await deleteDoc(doc(db, "faqs", faq.id));
@@ -1126,7 +1142,15 @@
     const respuesta = document.getElementById("faqRespuesta").value.trim();
     const orden = parseInt(document.getElementById("faqOrden").value) || 1;
     if (!pregunta || !respuesta) { alert("Completá pregunta y respuesta."); return; }
-    await addDoc(collection(db, "faqs"), {pregunta, respuesta, orden, creado: new Date().toISOString()});
+    if (editingFaqId) {
+      await setDoc(doc(db, "faqs", editingFaqId), {pregunta, respuesta, orden}, {merge: true});
+      editingFaqId = null;
+      document.getElementById("btnAddFaq").querySelector("span").textContent = "➕ Agregar";
+      document.getElementById("btnAddFaq").style.borderColor = "";
+      document.getElementById("btnAddFaq").style.color = "";
+    } else {
+      await addDoc(collection(db, "faqs"), {pregunta, respuesta, orden, creado: new Date().toISOString()});
+    }
     document.getElementById("faqPregunta").value = "";
     document.getElementById("faqRespuesta").value = "";
     document.getElementById("faqOrden").value = "1";
