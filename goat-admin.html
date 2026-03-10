@@ -216,6 +216,7 @@
   <div class="tab" id="tab-btn-historial">Historial canjes</div>
   <div class="tab" id="tab-btn-beneficios">Beneficios</div>
   <div class="tab" id="tab-btn-torneos">Torneos</div>
+  <div class="tab" id="tab-btn-hallfame">👑 Hall of Fame</div>
 
 </div>
 
@@ -355,6 +356,23 @@
 
 </div>
 
+  <!-- HALL OF FAME PANEL -->
+  <div class="panel" id="section-hallfame" style="display:none;">
+    <div class="panel-header"><div class="panel-title">👑 Hall of Fame</div></div>
+    <div class="panel-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:20px;">
+        <div><label class="form-label">Nombre</label><input class="form-input" id="hofNombre" placeholder="Nombre del ganador"></div>
+        <div><label class="form-label">Torneo ganado</label><input class="form-input" id="hofTorneo" placeholder="Nombre del torneo"></div>
+        <div><label class="form-label">Puntos HoF</label><input class="form-input" id="hofPuntos" type="number" value="20" min="1"></div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn btn-primary" id="btnAddHof" style="width:100%;"><span>➕ Agregar ganador</span></button></div>
+      </div>
+      <div class="panel-header" style="margin-top:8px;"><div class="panel-title">Ranking actual</div></div>
+      <div id="hofTableWrap" style="padding:8px 0;">
+        <table class="table" style="width:100%;"><thead><tr><th>#</th><th>Nombre</th><th>Torneo</th><th>Puntos HoF</th><th></th></tr></thead><tbody id="hofTableBody"><tr class="empty-row"><td colspan="5">Cargando...</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -408,15 +426,18 @@
 
   // TABS
   function switchTab(name) {
-    const names = ["dashboard","codigos","historial","beneficios","torneos"];
+    const names = ["dashboard","codigos","historial","beneficios","torneos","hallfame"];
     document.querySelectorAll(".tab").forEach((t,i) => t.classList.toggle("active", names[i] === name));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-    document.getElementById("tab-" + name).classList.add("active");
+    if (name !== "hallfame") document.getElementById("tab-" + name).classList.add("active");
+    const hofSection = document.getElementById("section-hallfame");
+    if (hofSection) hofSection.style.display = name === "hallfame" ? "" : "none";
     if (name === "dashboard") renderDashboard();
     if (name === "codigos") renderCodesTable();
     if (name === "historial") renderHistTable();
     if (name === "beneficios") { renderBenTable(); renderBenHistTable(); }
     if (name === "torneos") renderTorneos();
+    if (name === "hallfame") renderHofTable();
   }
 
 
@@ -1005,6 +1026,59 @@
   document.getElementById("searchCode").addEventListener("input", renderCodesTable);
   document.getElementById("searchHist").addEventListener("input", renderHistTable);
   document.getElementById("searchClientEmail").addEventListener("keydown", e => { if (e.key === "Enter") buscarCliente(); });
+  // ── HALL OF FAME ─────────────────────────────────────
+  async function renderHofTable() {
+    const tbody = document.getElementById("hofTableBody");
+    tbody.innerHTML = "<tr class='empty-row'><td colspan='5'>Cargando...</td></tr>";
+    const snap = await getDocs(collection(db, "hall_of_fame"));
+    const lista = [];
+    snap.forEach(d => lista.push({id: d.id, ...d.data()}));
+    lista.sort((a,b) => (b.puntos||0) - (a.puntos||0));
+    if (!lista.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='5'>No hay ganadores registrados</td></tr>"; return; }
+    tbody.innerHTML = "";
+    lista.forEach((g, i) => {
+      const medals = ["🥇","🥈","🥉"];
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.85rem;'>" + (medals[i] || "#"+(i+1)) + "</td>"
+        + "<td style='font-weight:700;'>" + g.nombre + "</td>"
+        + "<td style='color:var(--text-secondary);'>" + (g.torneo||"—") + "</td>"
+        + "<td style='color:var(--accent-yellow);font-family:Orbitron,monospace;font-weight:700;'>" + (g.puntos||0) + " pts</td>"
+        + "<td><button class='btn btn-danger' style='font-size:0.65rem;padding:4px 10px;' id='del-hof-" + g.id + "'><span>Eliminar</span></button></td>";
+      tbody.appendChild(tr);
+      document.getElementById("del-hof-"+g.id).addEventListener("click", async () => {
+        if (!confirm("¿Eliminar a " + g.nombre + " del Hall of Fame?")) return;
+        await deleteDoc(doc(db, "hall_of_fame", g.id));
+        renderHofTable();
+      });
+    });
+  }
+
+  document.getElementById("btnAddHof").addEventListener("click", async () => {
+    const nombre = document.getElementById("hofNombre").value.trim();
+    const torneo = document.getElementById("hofTorneo").value.trim();
+    const puntos = parseInt(document.getElementById("hofPuntos").value) || 20;
+    if (!nombre || !torneo) { alert("Completá nombre y torneo."); return; }
+    // Check if player already exists — sum points
+    const snap = await getDocs(collection(db, "hall_of_fame"));
+    let existingId = null;
+    let existingPts = 0;
+    snap.forEach(d => {
+      if (d.data().nombre.toLowerCase() === nombre.toLowerCase()) {
+        existingId = d.id;
+        existingPts = d.data().puntos || 0;
+      }
+    });
+    if (existingId) {
+      await setDoc(doc(db, "hall_of_fame", existingId), {puntos: existingPts + puntos, torneo}, {merge: true});
+    } else {
+      await addDoc(collection(db, "hall_of_fame"), {nombre, torneo, puntos, creado: new Date().toISOString()});
+    }
+    document.getElementById("hofNombre").value = "";
+    document.getElementById("hofTorneo").value = "";
+    document.getElementById("hofPuntos").value = "20";
+    renderHofTable();
+  });
+
 </script>
 </body>
 </html>
