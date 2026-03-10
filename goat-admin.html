@@ -217,8 +217,9 @@
   <div class="tab" id="tab-btn-historial">Historial canjes</div>
   <div class="tab" id="tab-btn-beneficios">Beneficios</div>
   <div class="tab" id="tab-btn-torneos">Torneos</div>
-  <div class="tab" id="tab-btn-hallfame">👑 Hall of Fame</div>
-  <div class="tab" id="tab-btn-faqs">❓ FAQs</div>
+  <div class="tab" id="tab-btn-hallfame" onclick="window.switchTab && window.switchTab('hallfame')">👑 Hall of Fame</div>
+  <div class="tab" id="tab-btn-faqs" onclick="window.switchTab && window.switchTab('faqs')">❓ FAQs</div>
+  <div class="tab" id="tab-btn-usuarios" onclick="window.switchTab && window.switchTab('usuarios')">👤 Usuarios</div>
 
 </div>
 
@@ -389,6 +390,21 @@
       </div>
     </div>
 
+  <div class="tab-content" id="tab-usuarios">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">👤 Usuarios registrados</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input class="form-input" id="searchUsuario" placeholder="Buscar por nombre o email..." style="width:260px;padding:7px 12px;font-size:0.82rem;">
+          <span id="usuarioCount" style="color:var(--text-muted);font-size:0.78rem;white-space:nowrap;"></span>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        <table class="table" style="width:100%;"><thead><tr><th>#</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Puntos</th><th>Nivel</th><th>Registrado</th></tr></thead><tbody id="usuariosTableBody"><tr class="empty-row"><td colspan="7">Cargando...</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+
 </div>
 </div>
 
@@ -444,7 +460,7 @@
   }
 
   // TABS
-  function switchTab(name) {
+  window.switchTab = function switchTab(name) {
     // Update tab button styles
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     const activeBtn = document.getElementById("tab-btn-" + name);
@@ -468,6 +484,7 @@
     if (name === "torneos") renderTorneos();
     if (name === "hallfame") renderHofTable();
     if (name === "faqs") renderFaqTable();
+    if (name === "usuarios") renderUsuarios();
   }
 
 
@@ -1171,6 +1188,65 @@
     document.getElementById("faqOrden").value = "1";
     renderFaqTable();
   });
+
+  // ── USUARIOS ─────────────────────────────────────────
+  const LEVELS = [{name:"Novato",min:0},{name:"Gamer",min:500},{name:"Pro",min:1200},{name:"Elite",min:2500},{name:"Master",min:5000},{name:"GOAT",min:10000}];
+  function getLevel(pts) {
+    let lv = LEVELS[0];
+    for (const l of LEVELS) { if (pts >= l.min) lv = l; }
+    return lv.name;
+  }
+
+  async function renderUsuarios() {
+    const tbody = document.getElementById("usuariosTableBody");
+    tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>Cargando...</td></tr>";
+    // Get all clients
+    const snap = await getDocs(collection(db, "clientes"));
+    const clientes = [];
+    snap.forEach(d => clientes.push({email: d.id, ...d.data()}));
+    // Get historial to calculate points
+    const histSnap = await getDocs(collection(db, "historial"));
+    const puntosPorEmail = {};
+    histSnap.forEach(d => {
+      const h = d.data();
+      if (h.email) {
+        puntosPorEmail[h.email.toLowerCase()] = (puntosPorEmail[h.email.toLowerCase()] || 0) + (h.puntos || 0);
+      }
+    });
+    // Get beneficios_historial to subtract
+    const benSnap = await getDocs(collection(db, "beneficios_historial"));
+    const gastadosPorEmail = {};
+    benSnap.forEach(d => {
+      const b = d.data();
+      if (b.email) gastadosPorEmail[b.email.toLowerCase()] = (gastadosPorEmail[b.email.toLowerCase()] || 0) + (b.ptsDescontados || 0);
+    });
+
+    clientes.sort((a,b) => (a.nombre||"").localeCompare(b.nombre||""));
+
+    document.getElementById("usuarioCount").textContent = clientes.length + " usuario(s)";
+
+    const q = (document.getElementById("searchUsuario").value || "").toLowerCase();
+    const filtered = clientes.filter(c => !q || (c.nombre||"").toLowerCase().includes(q) || (c.email||"").toLowerCase().includes(q));
+    document.getElementById("usuarioCount").textContent = filtered.length + " usuario(s)";
+
+    if (!filtered.length) { tbody.innerHTML = "<tr class='empty-row'><td colspan='7'>No hay usuarios registrados</td></tr>"; return; }
+    tbody.innerHTML = "";
+    filtered.forEach((c, i) => {
+      const email = (c.email||"").toLowerCase();
+      const pts = (puntosPorEmail[email]||0) - (gastadosPorEmail[email]||0);
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td style='color:var(--text-muted);font-size:0.75rem;'>" + String(i+1).padStart(2,"0") + "</td>"
+        + "<td style='font-weight:700;'>" + (c.nombre||"—") + "</td>"
+        + "<td style='color:var(--text-secondary);font-size:0.82rem;'>" + (c.email||"—") + "</td>"
+        + "<td style='color:var(--text-secondary);font-size:0.82rem;'>" + (c.telefono||"—") + "</td>"
+        + "<td style='font-family:Orbitron,monospace;color:var(--accent-green);font-weight:700;'>" + pts + "</td>"
+        + "<td><span style='background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.2);color:var(--accent-green);padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:700;'>" + getLevel(pts) + "</span></td>"
+        + "<td style='color:var(--text-muted);font-size:0.78rem;'>" + (c.creado||"—") + "</td>";
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById("searchUsuario")?.addEventListener("input", () => { if (document.getElementById("tab-usuarios").style.display === "block") renderUsuarios(); });
 
 </script>
 </body>
