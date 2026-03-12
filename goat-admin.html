@@ -46,7 +46,7 @@
   .btn-logout:hover { border-color:var(--accent-red); color:var(--accent-red); }
 
   /* TABS */
-  .tabs { position:relative; z-index:5; display:flex; padding:0 32px; border-bottom:1px solid var(--border); background:rgba(3,10,18,0.7); }
+  .tabs { position:relative; z-index:5; display:flex; flex-wrap:wrap; padding:0 32px; border-bottom:1px solid var(--border); background:rgba(3,10,18,0.7); }
   .tab { font-family:'Orbitron',monospace; font-size:0.62rem; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:#1e90ff; padding:16px 20px; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.25s; position:relative; top:1px; }
   .tab:hover { color:#00e5a0; text-shadow:0 0 10px rgba(0,229,160,0.6); }
   .tab.active { color:#00e5a0; border-bottom-color:#00e5a0; text-shadow:0 0 8px rgba(0,229,160,0.9),0 0 22px rgba(0,229,160,0.5); }
@@ -389,6 +389,7 @@
         <table class="table" style="width:100%;margin-top:8px;"><thead><tr><th>#</th><th>Pregunta</th><th>Respuesta</th><th>Acciones</th></tr></thead><tbody id="faqTableBody"><tr class="empty-row"><td colspan="5">Cargando...</td></tr></tbody></table>
       </div>
     </div>
+  </div>
 
   <div class="tab-content" id="tab-usuarios">
     <div class="panel">
@@ -405,7 +406,6 @@
     </div>
   </div>
 
-</div>
 </div>
 
 <script type="module">
